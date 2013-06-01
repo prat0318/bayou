@@ -1,0 +1,21 @@
+JOIN 1
+JOIN 2
+
+SHOW_DB
+
+DISCONNECT_FROM db_0 db_0#2
+
+RETIRE db_0#1
+
+CURR_STATE
+
+START_CLIENT db_0
+START_CLIENT db_0#2
+
+OP client_0 ADD$song_a$url_1
+OP client_1 ADD$song_c$url_2
+
+OP client_1 EDIT$song_c$url_3
+OP client_0 EDIT$song_a$url_2
+
+CURR_STATE

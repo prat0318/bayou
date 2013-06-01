@@ -1,0 +1,12 @@
+JOIN 1
+JOIN 2
+
+SHOW_DB
+
+DISCONNECT_FROM db_0 db_0#2
+
+RETIRE db_0#1
+
+CURR_STATE
+
+

@@ -1,0 +1,29 @@
+JOIN 1
+JOIN 2
+
+SHOW_DB
+
+DISCONNECT_FROM db_0 db_0#2
+DISCONNECT_FROM db_0 db_0#1
+
+CURR_STATE
+
+START_CLIENT db_0
+START_CLIENT db_0#2
+
+OP client_0 ADD$song_a$url_100
+OP client_0 ADD$song_b$url_200
+OP client_1 ADD$song_a$url_1
+OP client_1 ADD$song_b$url_2
+
+CURR_STATE
+
+STOP_CLIENT client_0
+RESTART_CLIENT client_0 db_0#2
+#DISCONNECT_FROM db_0 client_0
+
+CONNECT_THEM db_0 db_0#1
+START_CLIENT db_0#1
+OP client_2 ADD$song_trigger0$url_10000
+
+CURR_STATE
