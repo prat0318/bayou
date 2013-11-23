@@ -6,23 +6,15 @@
  * To change this template use File | Settings | File Templates.
  */
 public class ReplicaCommand {
+     ;
+    int csn;
+    ProcessId client;
+    Request request;
 
-
-}
-
-enum CommandTypes {
-    REQUEST("Request type"),
-    NEWDB("Create a new Database"),
-    RETIRE("Retire a database");
-
-    private String description;
-
-    CommandTypes(String description) {
-        this.description = description;
+    public ReplicaCommand(ProcessId client, int req_id, Request request) {
+        this.client = client;
+        this.csn = -1;
+        this.request = request;
     }
 
-    public String getDescription() {
-        return this.description;
-    }
 }
-
