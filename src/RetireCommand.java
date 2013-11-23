@@ -5,8 +5,8 @@
  * Time: 10:45 PM
  * To change this template use File | Settings | File Templates.
  */
-public class Retier extends Command{
-    Retier(ProcessId client) {
+public class RetireCommand extends Command{
+    RetireCommand(ProcessId client) {
         super(client);
     }
 }

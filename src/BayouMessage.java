@@ -35,49 +35,49 @@ class GiveNameMessage extends BayouMessage {
     }
 }
 
-class RetierMessage extends BayouMessage {
+class RetireMessage extends BayouMessage {
     @Override
     public String toString() {
-        return "RetierMessage{" +
+        return "RetireMessage{" +
                 "src=" + src +
                 '}';
     }
 
-    RetierMessage(ProcessId src) {
+    RetireMessage(ProcessId src) {
         this.src = src;
         this.src_name = src.name;
     }
 }
 
 class RequestMessage extends BayouMessage {
-    Request request;
+    RequestCommand requestCommand;
 
-    public RequestMessage(ProcessId src, Request request) {
+    public RequestMessage(ProcessId src, RequestCommand requestCommand) {
         this.src = src;
         this.src_name = src.name;
-        this.request = request;
+        this.requestCommand = requestCommand;
     }
 
     @Override
     public String toString() {
         return "RequestMessage{" +
-                "request=" + request +
+                "requestCommand=" + requestCommand +
                 '}';
     }
 }
 
 class ResponseMessage extends BayouMessage {
-    Request request;
+    RequestCommand requestCommand;
 
-    public ResponseMessage(ProcessId src, Request request) {
+    public ResponseMessage(ProcessId src, RequestCommand requestCommand) {
         this.src = src;
         this.src_name = src.name;
-        this.request = request;
+        this.requestCommand = requestCommand;
     }
 
     @Override
     public String toString() {
-        return "Command: " + request + " done.";
+        return "Command: " + requestCommand + " done.";
     }
 }
 

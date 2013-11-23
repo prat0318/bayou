@@ -16,7 +16,6 @@ public class Replica extends Process {
     List<Command> writeLog = new ArrayList<Command>();
     int csn = -1;
     boolean primary;
-    String my_name;
 
     public Replica(Env env, ProcessId me, boolean primary) {
         this.env = env;
@@ -28,7 +27,7 @@ public class Replica extends Process {
         env.addProc(me, this);
     }
 
-    void action(Request c) {
+    void action(RequestCommand c) {
         String[] args = c.args.split(Env.TX_MSG_SEPARATOR);
         switch (c.type) {
             case ADD:
@@ -52,22 +51,14 @@ public class Replica extends Process {
 
 
     public void body() {
-        sendMessage(env.dbProcs.get("1").me, new GetNameMessage(me));
-        while (my_name == null) {
-            BayouMessage msg = getNextMessage();
-            if (msg instanceof GiveNameMessage) {
-                GiveNameMessage nameMessage = (GiveNameMessage) msg;
-                my_name = nameMessage.name;
-            } else {
-                logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");
-            }
-        }
+        if(!primary)
+            giveMeAName();
         logger.log(messageLevel, "Here I am: " + me);
         while (!stop_request()) {
             BayouMessage msg = getNextMessage();
 
             if (msg instanceof RequestMessage) {
-                Request c = ((RequestMessage) msg).request;
+                RequestCommand c = ((RequestMessage) msg).requestCommand;
                 c.acceptClock = clock;
                 clock++;
                 c.replica = this.me;
@@ -77,21 +68,35 @@ public class Replica extends Process {
             } else if (msg instanceof GetNameMessage) {
                 GetNameMessage message = (GetNameMessage) msg;
                 AssignName command = new AssignName(message.src);
-                command.response = clock + this.my_name;
+                command.response = me.name + "." + clock;
                 command.acceptClock = clock;
                 command.replica = this.me;
                 clock++;
                 writeLog.add(command);
                 sendMessage(message.src, new GiveNameMessage(me, command.response));
-            } else if (msg instanceof RetierMessage) {
-                RetierMessage message = (RetierMessage) msg;
-                Retier command = new Retier(message.src);
-                command.response = clock + this.my_name;
+            } else if (msg instanceof RetireMessage) {
+                RetireMessage message = (RetireMessage) msg;
+                RetireCommand command = new RetireCommand(message.src);
+                command.response = me.name + "." + clock;
                 command.acceptClock = clock;
                 command.replica = this.me;
                 clock++;
                 writeLog.add(command);
             }else {
+                logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");
+            }
+        }
+    }
+
+    private void giveMeAName() {
+        sendMessage((ProcessId)env.dbProcs.keySet().toArray()[0], new GetNameMessage(me));
+        while (true) {
+            BayouMessage msg = getNextMessage();
+            if (msg instanceof GiveNameMessage) {
+                GiveNameMessage nameMessage = (GiveNameMessage) msg;
+                me.name = nameMessage.name;
+                break;
+            } else {
                 logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");
             }
         }

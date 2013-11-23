@@ -59,7 +59,8 @@ public class Env {
             int initialDbCount = Integer.parseInt(prop.getProperty("initialDbCount"));
             for(int i = 0; i < initialDbCount; i++) {
                 ProcessId pid = new ProcessId("db_"+i);
-                Replica _ = new Replica(this, pid);
+                boolean primaryFlag = i == 0;
+                Replica _ = new Replica(this, pid, primaryFlag);
             }
         } catch (Exception e) {
             System.out.println("Error while reading the properties file for the Operation");
@@ -96,7 +97,7 @@ public class Env {
                 break;
             case JOIN:
                 pid = new ProcessId("db_"+arr[1]);
-                Replica _db = new Replica(this, pid);
+                Replica _db = new Replica(this, pid, false);
                 System.out.println("Started new DB "+ pid);
                 break;
             case LEAVE:
@@ -125,7 +126,7 @@ public class Env {
                 String[] opArr = arr[1].split(BODY_MSG_SEPERATOR, 2);
                 for(ProcessId p : clientProcs.keySet()) {
                     if(p.name.equals(opArr[0])) {
-                        sendMessage(p, new RequestMessage(this.pid, new Command(p, opArr[1])));
+                        sendMessage(p, new RequestMessage(this.pid, new RequestCommand(p, opArr[1])));
                         return;
                     }
                 }

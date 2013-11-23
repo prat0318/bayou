@@ -5,13 +5,13 @@
  * Time: 8:52 PM
  * To change this template use File | Settings | File Templates.
  */
-public class Request extends Command{
+public class RequestCommand extends Command{
     RequestType type;
     String args;
 
-    Request(ProcessId client,String requestString) {
+    RequestCommand(ProcessId client, String requestString) {
         super(client);
-        String[] splitRequest = requestString.split("#",2);
+        String[] splitRequest = requestString.split(Env.TX_MSG_SEPARATOR,2);
         this.args = splitRequest[1];
         this.type = RequestType.valueOf(splitRequest[0]);
     }
@@ -19,12 +19,12 @@ public class Request extends Command{
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Request)) return false;
+        if (!(o instanceof RequestCommand)) return false;
 
-        Request request = (Request) o;
+        RequestCommand requestCommand = (RequestCommand) o;
 
-        if (!args.equals(request.args)) return false;
-        if (type != request.type) return false;
+        if (!args.equals(requestCommand.args)) return false;
+        if (type != requestCommand.type) return false;
 
         return true;
     }
@@ -38,9 +38,10 @@ public class Request extends Command{
 
     @Override
     public String toString() {
-        return "Request{" +
+        return "RequestCommand{" +
                 "type=" + type +
-                ", args='" + args + '\'' +
+                ", args='" + args + "\', " +
+                super.toString() +
                 '}';
     }
 
