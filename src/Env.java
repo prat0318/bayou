@@ -56,6 +56,11 @@ public class Env {
         try {
             Properties prop = new Properties();
             prop.load(new FileInputStream("config.properties"));
+            int initialDbCount = Integer.parseInt(prop.getProperty("initialDbCount"));
+            for(int i = 0; i < initialDbCount; i++) {
+                ProcessId pid = new ProcessId("db_"+i);
+                Replica _ = new Replica(this, pid);
+            }
         } catch (Exception e) {
             System.out.println("Error while reading the properties file for the Operation");
        }
