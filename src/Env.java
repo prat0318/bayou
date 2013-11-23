@@ -68,7 +68,7 @@ public class Env {
         switch (c) {
             case START_CLIENT:
                 ProcessId pid = new ProcessId("client_"+maxClientNo++);
-                Client c = new Client();
+                Client _ = new Client(this, pid);
                 break;
             case STOP_CLIENT:
                 for(ProcessId p : procs.keySet()){
