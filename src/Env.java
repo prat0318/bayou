@@ -23,6 +23,10 @@ public class Env {
     }
 
     synchronized void addProc(ProcessId pid, Process proc) {
+        if(proc instanceof Client)
+            clientProcs.put(pid, proc);
+        else if(proc instanceof Replica)
+            dbProcs.put(pid, proc);
         procs.put(pid, proc);
         proc.start();
     }
@@ -37,7 +41,7 @@ public class Env {
         e.run(args);
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         while (true) {
-            System.out.print("$ Enter new ReplicaCommand KILL|SHOW|TX|HELP > ");
+            System.out.print("$ Enter new Command (HELP) > ");
             String input = br.readLine();
             e.operateOn(input);
         }
@@ -56,7 +60,6 @@ public class Env {
     private void operateOn(String input) {
         String[] arr = input.split(BODY_MSG_SEPERATOR,2);
         String inputCommand = arr[0];
-        String commandBody = arr[1];
         UserCommands c = null;
         try {
             c = UserCommands.valueOf(inputCommand);
@@ -69,12 +72,15 @@ public class Env {
             case START_CLIENT:
                 ProcessId pid = new ProcessId("client_"+maxClientNo++);
                 Client _ = new Client(this, pid);
+                System.out.println("Started new Client "+ pid);
                 break;
             case STOP_CLIENT:
-                for(ProcessId p : procs.keySet()){
-                    procs.get(p).assign_stop_request = true;
-                    System.out.println("Scheduled Kill for " + p);
-                    return;
+                for(ProcessId p : procs.keySet()) {
+                    if(p.name.equals(arr[1])) {
+                        procs.get(p).assign_stop_request = true;
+                        System.out.println("Scheduled Kill for " + p);
+                        return;
+                    }
                 }
                 System.out.println("Could not find such process...type SHOW for live clients");
                 break;
@@ -84,7 +90,7 @@ public class Env {
                 }
                 System.out.println();
                 break;
-            case SHOW_C:
+            case SHOW_CLIENTS:
                 for (ProcessId p : clientProcs.keySet()) {
                     System.out.print(p + " | ");
                 }
