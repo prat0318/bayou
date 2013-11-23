@@ -45,7 +45,9 @@ public class Request {
     public enum RequestType {
         ADD("Add"),
         DELETE("Delete"),
-        EDIT("Edit");
+        EDIT("Edit"),
+        GIVENAME("GiveName"),
+        RETIER("Retier");
 
         public String type;
 
