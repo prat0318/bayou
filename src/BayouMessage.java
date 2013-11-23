@@ -68,18 +68,16 @@ class RequestMessage extends BayouMessage {
 
 class ResponseMessage extends BayouMessage {
     ReplicaCommand command;
-    long createdAt;
 
     public ResponseMessage(ProcessId src, ReplicaCommand command) {
         this.src = src;
         this.src_name = src.name;
         this.command = command;
-        this.createdAt = System.currentTimeMillis();
     }
 
     @Override
     public String toString() {
-        return "Command: " + command + " done. Executed at T=" + createdAt;
+        return "Command: " + command + " done.";
     }
 }
 

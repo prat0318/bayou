@@ -13,9 +13,14 @@ public class ReplicaCommand {
     Request request;
     String response;
 
-    public ReplicaCommand(ProcessId client, Request request) {
+    public ReplicaCommand(ProcessId client, String requestString) {
         this.client = client;
-        this.request = request;
+        this.request = createRequest(requestString);
+    }
+
+    public Request createRequest(String requestString) {
+        String[] splitRequest = requestString.split("#",2);
+        return new Request(splitRequest[0], splitRequest[1]);
     }
 
     @Override
@@ -51,7 +56,7 @@ public class ReplicaCommand {
                 ", replica=" + replica +
                 ", client=" + client +
                 ", request=" + request +
-                ", response='" + response + '\'' +
+                ", response=" + response +
                 '}';
     }
 }

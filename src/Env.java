@@ -32,6 +32,10 @@ public class Env {
     }
 
     synchronized void removeProc(ProcessId pid) {
+        if(procs.get(pid) instanceof Client)
+            clientProcs.remove(pid);
+        else if(procs.get(pid) instanceof Replica)
+            dbProcs.remove(pid);
         procs.remove(pid);
     }
 
@@ -75,14 +79,14 @@ public class Env {
                 System.out.println("Started new Client "+ pid);
                 break;
             case STOP_CLIENT:
-                for(ProcessId p : procs.keySet()) {
+                for(ProcessId p : clientProcs.keySet()) {
                     if(p.name.equals(arr[1])) {
                         procs.get(p).assign_stop_request = true;
                         System.out.println("Scheduled Kill for " + p);
                         return;
                     }
                 }
-                System.out.println("Could not find such process...type SHOW for live clients");
+                System.out.println("Could not find such client...type SHOW for live clients");
                 break;
             case SHOW_DB:
                 for (ProcessId p : dbProcs.keySet()) {
@@ -95,6 +99,16 @@ public class Env {
                     System.out.print(p + " | ");
                 }
                 System.out.println();
+                break;
+            case OP:
+                String[] opArr = arr[1].split(BODY_MSG_SEPERATOR, 2);
+                for(ProcessId p : clientProcs.keySet()) {
+                    if(p.name.equals(opArr[0])) {
+                        sendMessage(p, new RequestMessage(this.pid, new ReplicaCommand(p, opArr[1])));
+                        return;
+                    }
+                }
+                System.out.println("Could not find "+ opArr[0] +"...type SHOW for live clients");
                 break;
             case HELP:
                 for (UserCommands cc : UserCommands.values()) {
