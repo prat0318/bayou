@@ -1,2 +1,4 @@
-*.class
+.idea
+bayou.iml
+out/
 log/
