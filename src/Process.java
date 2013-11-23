@@ -16,15 +16,15 @@ public abstract class Process extends Thread {
     public Level messageLevel = Level.FINER;
     String my_name = "";
 
-    public boolean stop_request(ProcessId whoGotKilled){
+    public boolean stop_request(ProcessId whoGotKilled) {
         try {
             Thread.sleep(this.delay);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        if(assign_stop_request) {
+        if (assign_stop_request) {
             env.removeProc(whoGotKilled);
-            logger.log(Level.SEVERE, whoGotKilled+" is getting killed. Bbye.");
+            logger.log(Level.SEVERE, whoGotKilled + " is getting killed. Bbye.");
         }
         return assign_stop_request;
     }
@@ -70,7 +70,7 @@ public abstract class Process extends Thread {
 
     void deliver(BayouMessage msg) {
         inbox.enqueue(msg);
-        this.logger.log(messageLevel,my_name+ "RCVD <<" + msg.src_name + "<< : " + msg);
+        this.logger.log(messageLevel, my_name + "RCVD <<" + msg.src_name + "<< : " + msg);
     }
 
     public void setLogger() {

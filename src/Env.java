@@ -11,7 +11,7 @@ public class Env {
     static final String CLIENT_MSG_SEPARATOR = ":";
     static final String BODY_MSG_SEPERATOR = " ";
     ProcessId pid = new ProcessId("Main");
-    Map<String, Client> clnts;
+    Map<String, Client> clientMap;
 
     synchronized void sendMessage(ProcessId dst, BayouMessage msg) {
         Process p = procs.get(dst);
@@ -35,7 +35,7 @@ public class Env {
         e.run(args);
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         while (true) {
-            System.out.print("$ Enter new Command KILL|SHOW|TX|HELP > ");
+            System.out.print("$ Enter new ReplicaCommand KILL|SHOW|TX|HELP > ");
             String input = br.readLine();
             e.operateOn(input);
         }
