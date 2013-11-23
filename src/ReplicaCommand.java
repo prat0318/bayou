@@ -14,10 +14,15 @@ public class ReplicaCommand {
     Request request;
     String response;
 
-    public ReplicaCommand(ProcessId client, Request request) {
+    public ReplicaCommand(ProcessId client, String requestString) {
         this.client = client;
         this.csn = -1;
-        this.request = request;
+        this.request = createRequest(requestString);
+    }
+
+    public Request createRequest(String requestString) {
+        String[] splitRequest = requestString.split("#",2);
+        return new Request(splitRequest[0], splitRequest[1]);
     }
 
     @Override
