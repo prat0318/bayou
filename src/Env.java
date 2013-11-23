@@ -32,6 +32,10 @@ public class Env {
     }
 
     synchronized void removeProc(ProcessId pid) {
+        if(procs.get(pid) instanceof Client)
+            clientProcs.remove(pid);
+        else if(procs.get(pid) instanceof Replica)
+            dbProcs.remove(pid);
         procs.remove(pid);
     }
 

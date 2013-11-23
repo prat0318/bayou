@@ -59,6 +59,7 @@ public class ReplicaCommand {
                 ", replica=" + replica +
                 ", client=" + client +
                 ", request=" + request +
+                ", response=" + response +
                 '}';
     }
 }
