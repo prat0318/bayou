@@ -25,27 +25,26 @@ public class PlayList {
         return result;
     }
 
-    public void add(String song, String url) {
+    public String add(String song, String url) {
         songMap.put(song, url);
+        return "Added " + song;
     }
 
-    public boolean edit(String song, String url) {
+    public String edit(String song, String url) {
         if (!songMap.containsKey(song)) {
-            System.out.println("ERROR: PlayList does not contain " + song);
-            return false;
+            return "ERROR: PlayList does not contain " + song;
         }
 
         songMap.put(song, url);
-        return true;
+        return "Edited Song " + song;
     }
 
-    public boolean delete(String song) {
+    public String delete(String song) {
         if (!songMap.containsKey(song)) {
-            System.out.println("ERROR: PlayList does not contain " + song);
-            return false;
+            return "ERROR: PlayList does not contain " + song;
         }
         songMap.remove(song);
-        return true;
+        return "Deleted Song " + song;
     }
 
     public boolean containsSong(String song) {

@@ -11,13 +11,14 @@ import java.util.logging.Level;
  */
 public class Replica extends Process {
 
+    int clock = 0;
     public PlayList playList;
     List<ReplicaCommand> writeLog = new ArrayList<ReplicaCommand>();
 
     public Replica(Env env, ProcessId me, ProcessId[] leaders) {
-        getName();
         this.env = env;
         this.me = me;
+        playList = new PlayList();
         setLogger();
         loadProp();
         env.addProc(me, this);
@@ -25,24 +26,23 @@ public class Replica extends Process {
 
     boolean action(ReplicaCommand c) {
         String[] args = c.request.args.split(Env.TX_MSG_SEPARATOR);
-        String output ="";
         try {
 
             switch (c.request.type) {
                 case ADD:
-                    playList.add(args[0],args[1]);
+                    c.response = playList.add(args[0], args[1]);
                     break;
                 case DELETE:
-                    playList.delete(args[0]);
+                    c.response = playList.delete(args[0]);
                     break;
                 case EDIT:
-                    playList.edit(args[0],args[1]);
+                    c.response = playList.edit(args[0], args[1]);
                     break;
                 default:
-                    output = "INVALID OPERATION TYPE";
+                    c.response = "INVALID OPERATION TYPE";
                     break;
             }
-            logger.log(messageLevel, "PERFORMED OUTPUT :" + output);
+            logger.log(messageLevel, "PERFORMED OUTPUT :" + c.response);
             sendMessage(c.client, new ResponseMessage(me, c));
         } catch (Exception e) {
             e.printStackTrace();
@@ -59,7 +59,12 @@ public class Replica extends Process {
             BayouMessage msg = getNextMessage();
 
             if (msg instanceof RequestMessage) {
-
+                ReplicaCommand c = ((RequestMessage) msg).command;
+                c.acceptClock = clock;
+                clock++;
+                c.replica = this.me;
+                writeLog.add(c);
+                action(c);
             } else {
                 logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");
             }
