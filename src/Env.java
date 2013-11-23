@@ -77,10 +77,11 @@ public class Env {
                 System.err.println("Unknown Command! "+inputCommand);
             return;
         }
+        ProcessId pid;
         switch (c) {
             case START_CLIENT:
-                ProcessId pid = new ProcessId("client_"+maxClientNo++);
-                Client _ = new Client(this, pid);
+                pid = new ProcessId("client_"+maxClientNo++);
+                Client _client = new Client(this, pid);
                 System.out.println("Started new Client "+ pid);
                 break;
             case STOP_CLIENT:
@@ -91,7 +92,22 @@ public class Env {
                         return;
                     }
                 }
-                System.out.println("Could not find such client...type SHOW for live clients");
+                System.out.println("Could not find such client...type SHOW_CLIENTS for live clients");
+                break;
+            case JOIN:
+                pid = new ProcessId("db_"+arr[1]);
+                Replica _db = new Replica(this, pid);
+                System.out.println("Started new DB "+ pid);
+                break;
+            case LEAVE:
+                for(ProcessId p : dbProcs.keySet()) {
+                    if(p.name.equals(arr[1])) {
+                        procs.get(p).assign_stop_request = true;
+                        System.out.println("Scheduled Kill for " + p);
+                        return;
+                    }
+                }
+                System.out.println("Could not find such db...type SHOW_DB for live dbs");
                 break;
             case SHOW_DB:
                 for (ProcessId p : dbProcs.keySet()) {

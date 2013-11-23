@@ -40,6 +40,9 @@ public class Replica extends Process {
             case EDIT:
                 c.response = playList.edit(args[0], args[1]);
                 break;
+            case SHOW:
+                c.response = playList.show();
+                break;
             default:
                 c.response = "INVALID OPERATION TYPE";
                 break;

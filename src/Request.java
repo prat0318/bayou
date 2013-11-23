@@ -47,7 +47,9 @@ public class Request extends Command{
     public enum RequestType {
         ADD("Add"),
         DELETE("Delete"),
-        EDIT("Edit");
+        EDIT("Edit"),
+        SHOW("Show"),
+        ;
 
         public String type;
 

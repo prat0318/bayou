@@ -55,5 +55,8 @@ public class PlayList {
         songMap.clear();
     }
 
+    public String show() {
+        return songMap.toString();
+    }
 }
 
