@@ -5,13 +5,15 @@
  * Time: 8:52 PM
  * To change this template use File | Settings | File Templates.
  */
-public class Request {
+public class Request extends Command{
     RequestType type;
     String args;
 
-    Request(String type, String op) {
-        this.args = op;
-        this.type = RequestType.valueOf(type);
+    Request(ProcessId client,String requestString) {
+        super(client);
+        String[] splitRequest = requestString.split("#",2);
+        this.args = splitRequest[1];
+        this.type = RequestType.valueOf(splitRequest[0]);
     }
 
     @Override
@@ -45,9 +47,7 @@ public class Request {
     public enum RequestType {
         ADD("Add"),
         DELETE("Delete"),
-        EDIT("Edit"),
-        GIVENAME("GiveName"),
-        RETIER("Retier");
+        EDIT("Edit");
 
         public String type;
 

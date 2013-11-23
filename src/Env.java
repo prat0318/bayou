@@ -104,7 +104,7 @@ public class Env {
                 String[] opArr = arr[1].split(BODY_MSG_SEPERATOR, 2);
                 for(ProcessId p : clientProcs.keySet()) {
                     if(p.name.equals(opArr[0])) {
-                        sendMessage(p, new RequestMessage(this.pid, new ReplicaCommand(p, opArr[1])));
+                        sendMessage(p, new RequestMessage(this.pid, new Command(p, opArr[1])));
                         return;
                     }
                 }

@@ -50,34 +50,34 @@ class RetierMessage extends BayouMessage {
 }
 
 class RequestMessage extends BayouMessage {
-    ReplicaCommand command;
+    Request request;
 
-    public RequestMessage(ProcessId src, ReplicaCommand command) {
+    public RequestMessage(ProcessId src, Request request) {
         this.src = src;
         this.src_name = src.name;
-        this.command = command;
+        this.request = request;
     }
 
     @Override
     public String toString() {
         return "RequestMessage{" +
-                "command=" + command +
+                "request=" + request +
                 '}';
     }
 }
 
 class ResponseMessage extends BayouMessage {
-    ReplicaCommand command;
+    Request request;
 
-    public ResponseMessage(ProcessId src, ReplicaCommand command) {
+    public ResponseMessage(ProcessId src, Request request) {
         this.src = src;
         this.src_name = src.name;
-        this.command = command;
+        this.request = request;
     }
 
     @Override
     public String toString() {
-        return "Command: " + command + " done.";
+        return "Command: " + request + " done.";
     }
 }
 

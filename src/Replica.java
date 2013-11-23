@@ -13,7 +13,7 @@ public class Replica extends Process {
 
     int clock = 0;
     public PlayList playList;
-    List<ReplicaCommand> writeLog = new ArrayList<ReplicaCommand>();
+    List<Command> writeLog = new ArrayList<Command>();
     int csn = -1;
     boolean primary;
     String my_name;
@@ -28,9 +28,9 @@ public class Replica extends Process {
         env.addProc(me, this);
     }
 
-    void action(ReplicaCommand c) {
-        String[] args = c.request.args.split(Env.TX_MSG_SEPARATOR);
-        switch (c.request.type) {
+    void action(Request c) {
+        String[] args = c.args.split(Env.TX_MSG_SEPARATOR);
+        switch (c.type) {
             case ADD:
                 c.response = playList.add(args[0], args[1]);
                 break;
@@ -64,7 +64,7 @@ public class Replica extends Process {
             BayouMessage msg = getNextMessage();
 
             if (msg instanceof RequestMessage) {
-                ReplicaCommand c = ((RequestMessage) msg).command;
+                Request c = ((RequestMessage) msg).request;
                 c.acceptClock = clock;
                 clock++;
                 c.replica = this.me;
@@ -73,14 +73,22 @@ public class Replica extends Process {
                 sendMessage(c.client, new ResponseMessage(me, c));
             } else if (msg instanceof GetNameMessage) {
                 GetNameMessage message = (GetNameMessage) msg;
-                ReplicaCommand command = new ReplicaCommand(message.src, new Request("GiveName", ""));
+                AssignName command = new AssignName(message.src);
                 command.response = clock + this.my_name;
                 command.acceptClock = clock;
                 command.replica = this.me;
                 clock++;
                 writeLog.add(command);
                 sendMessage(message.src, new GiveNameMessage(me, command.response));
-            } else {
+            } else if (msg instanceof RetierMessage) {
+                RetierMessage message = (RetierMessage) msg;
+                Retier command = new Retier(message.src);
+                command.response = clock + this.my_name;
+                command.acceptClock = clock;
+                command.replica = this.me;
+                clock++;
+                writeLog.add(command);
+            }else {
                 logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");
             }
         }
