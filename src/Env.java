@@ -1,10 +1,8 @@
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Scanner;
 
 public class Env {
     Map<ProcessId, Process> clientProcs = new HashMap<ProcessId, Process>();
@@ -15,6 +13,9 @@ public class Env {
     static final String CLIENT_MSG_SEPARATOR = ":";
     static final String BODY_MSG_SEPERATOR = " ";
     ProcessId pid = new ProcessId("Main");
+    private static boolean scriptMode = false;
+    private static long delay_interval = 100;
+
 
     synchronized void sendMessage(ProcessId dst, BayouMessage msg) {
         Process p = procs.get(dst);
@@ -26,7 +27,7 @@ public class Env {
     synchronized void addProc(ProcessId pid, Process proc) {
         if (proc instanceof Client)
             clientProcs.put(pid, proc);
-        //REPLICA IS REGISTERED ONLY AFTER ASSIGNED NAME
+            //REPLICA IS REGISTERED ONLY AFTER ASSIGNED NAME
         else if (proc instanceof Replica && ((Replica) proc).primary)
             dbProcs.put(pid, proc);
         procs.put(pid, proc);
@@ -50,7 +51,7 @@ public class Env {
 
             FileOutputStream out = new FileOutputStream("config.properties");
             for (String p : prop.stringPropertyNames()) {
-                if(p.contains("client")){
+                if (p.contains("client")) {
                     prop.remove(p);
                 }
             }
@@ -60,17 +61,46 @@ public class Env {
             e.printStackTrace();
         }
     }
-
+    private static void delay()
+    {
+        try {
+            Thread.sleep(delay_interval);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) throws Exception {
         Env e = new Env();
         e.resetProperties();
         e.run(args);
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        while (true) {
-            System.out.print("$ Enter new Command (HELP) > ");
-            String input = br.readLine();
-            e.operateOn(input);
+
+        args = new String[1];
+        args[0] = "script";
+        if (args.length == 0) {
+            while (true) {
+                System.out.print("$ Enter new Command (HELP) > ");
+                String input = br.readLine();
+                e.operateOn(input);
+            }
+        } else {
+            try {
+                scriptMode = true;
+                br = new BufferedReader(new FileReader(new File(args[0])));
+                while (scriptMode) {
+                    String input = br.readLine();
+                    if(input == null){
+                        break;
+                    }
+                    System.out.println("SCRIPT CMD: "+input);
+                    e.operateOn(input);
+                    delay();
+                }
+            } catch (FileNotFoundException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
@@ -121,7 +151,7 @@ public class Env {
             case JOIN:
                 pid = new ProcessId("db_" + arr[1]);
                 Replica _db = new Replica(this, pid, false);
-                System.out.println("Started new DB " + pid );
+                System.out.println("Started new DB " + pid);
                 break;
             case LEAVE:
                 for (ProcessId p : dbProcs.keySet()) {
@@ -162,6 +192,7 @@ public class Env {
                 for (ProcessId p : dbProcs.keySet()) {
                     if (p.name.equals(arr[1])) {
                         dbProcs.get(p).disconnect = true;
+                        sendMessage(p, new BayouMessage(this.pid, new RequestMessage(new RequestCommand(null, p, "SHOW$"))));
                         System.out.println("Set disconnect for " + p);
                         return;
                     }
@@ -192,6 +223,7 @@ public class Env {
                 for (ProcessId p : dbProcs.keySet()) {
                     System.out.println("to Set disconnect for " + p);
                     dbProcs.get(p).disconnect = true;
+                    sendMessage(p, new BayouMessage(this.pid, new RequestMessage(new RequestCommand(null, p, "SHOW$"))));
                     System.out.println("Set disconnect for " + p);
                 }
                 System.out.println("Disconnected all the db ");

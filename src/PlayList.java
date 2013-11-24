@@ -60,24 +60,24 @@ public class PlayList {
     }
 
 
-    void action(RequestCommand c) {
+    boolean action(RequestCommand c) {
         String[] args = c.op.split(Env.TX_MSG_SEPARATOR);
         switch (c.opType) {
             case ADD:
                 c.response = add(args[0], args[1]);
-                break;
+                return true;
             case DELETE:
                 c.response = delete(args[0]);
-                break;
+                return true;
             case EDIT:
                 c.response = edit(args[0], args[1]);
-                break;
+                return true;
             case SHOW:
                 c.response = show();
-                break;
+                return false;
             default:
                 c.response = "INVALID OPERATION TYPE";
-                break;
+                return false;
         }
     }
 }

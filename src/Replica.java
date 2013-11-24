@@ -30,7 +30,7 @@ public class Replica extends Process {
 
 
     public void body() {
-        if(!primary)
+        if (!primary)
             giveMeAName();
         else
             start_gossip_thread();
@@ -40,13 +40,13 @@ public class Replica extends Process {
             BayouMessage rawMsg = getNextMessage();
             BayouCommandMessage msg = rawMsg.bayouCommandMessage;
             //DROP A MESSAGE IF COMMAND IS PRESENT AND IS AHEAD OF YOUR VERSION VECTOR
-            if(msg.command != null && msg.command.acceptStamp != null) {
+            if (msg.command != null && msg.command.acceptStamp != null) {
                 //ToDo: CHECK IF COMMAND IS ALREADY EXECUTED AND PRESENT IN MY WRITE_LOG
                 Integer currentClock = versionVector.get(msg.command.acceptStamp.replica.name);
-                if(!my_first_request_name_response(msg))
-                    if((currentClock != null && currentClock < msg.command.acceptStamp.acceptClock) ||
-                       (currentClock == null && msg.command.acceptStamp.acceptClock != 1) ) {
-                        logger.log(messageLevel, "Dropping message, currClock="+currentClock+" "+msg.command);
+                if (!my_first_request_name_response(msg))
+                    if ((currentClock != null && currentClock < msg.command.acceptStamp.acceptClock) ||
+                            (currentClock == null && msg.command.acceptStamp.acceptClock != 1)) {
+                        logger.log(messageLevel, "Dropping message, currClock=" + currentClock + " " + msg.command);
                         continue;
                     }
                 //ToDo: IF CANNOT BE ADDED AT THE END OF WRITE_LOG, POP ALL WRITE_LOGS AND
@@ -54,24 +54,25 @@ public class Replica extends Process {
             }
 
             if (msg instanceof RequestMessage) {
-                RequestCommand c = (RequestCommand)((RequestMessage) msg).command;
+                RequestCommand c = (RequestCommand) ((RequestMessage) msg).command;
                 c.updateAcceptStamp(clock, me);
-                playList.action(c);
+                if (playList.action(c)) {
+                    addToLog(msg);
+                }
                 logger.log(messageLevel, "PERFORMED " + c + "OUTPUT :" + c.response);
-                if(rawMsg.src.equals(c.client))  //Only if I was the first replica then reply
+                if (rawMsg.src.equals(c.client))  //Only if I was the first replica then reply
                     sendMessage(c.client, new BayouMessage(me, new ResponseMessage(c)));
-                addToLog(msg);
             } else if (msg instanceof RequestNameMessage) {
                 RequestNameMessage message = (RequestNameMessage) msg;
-                if(message.command != null) {
+                if (message.command != null) {
                     AcceptStamp acceptStamp = message.command.acceptStamp;
 
-                    if(message.my_original_name.equals(me.name)) {
+                    if (message.my_original_name.equals(me.name)) {
                         assign_given_name(message);
                         start_gossip_thread();
                     }
                     //ToDo: HANDLE RETIRED MESSAGE
-                    if(versionVector.get(acceptStamp.replica.name) == null)
+                    if (versionVector.get(acceptStamp.replica.name) == null)
                         versionVector.put(acceptStamp.replica.name, acceptStamp.acceptClock);
                 } else {                  //Command null means sent first to you
                     message.command = new Command();
@@ -84,23 +85,23 @@ public class Replica extends Process {
                 addToLog(message);
             } else if (msg instanceof RetireMessage) {
                 RetireMessage message = (RetireMessage) msg;
-                if(message.command != null) { //The replica present in command is retiring
+                if (message.command != null) { //The replica present in command is retiring
                     versionVector.remove(message.command.acceptStamp.replica.name);
                 } else { //Remove myself
                     //ToDo: SEND ALL YOUR WRITE LOG TO ONE OF REPLICA, THEN BREAK ON ACK
                     message.command = new Command(new AcceptStamp(clock, me));
                 }
                 addToLog(message);
-            }else {
+            } else {
                 logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");
             }
         }
     }
 
     private boolean my_first_request_name_response(BayouCommandMessage message) {
-        if(message instanceof RequestNameMessage) {
-            RequestNameMessage requestNameMessage = (RequestNameMessage)message;
-            if(requestNameMessage.my_original_name.equals(me.name) && requestNameMessage.command != null &&
+        if (message instanceof RequestNameMessage) {
+            RequestNameMessage requestNameMessage = (RequestNameMessage) message;
+            if (requestNameMessage.my_original_name.equals(me.name) && requestNameMessage.command != null &&
                     !versionVector.containsKey(requestNameMessage.command.acceptStamp))
                 return true;
         }
@@ -116,18 +117,18 @@ public class Replica extends Process {
     }
 
     private void start_gossip_thread() {
-        Gossip Gossiper = new Gossip(this, new ProcessId("Gossiper:"+me));
+        Gossip Gossiper = new Gossip(this, new ProcessId("Gossiper:" + me));
         myGossiper = Gossiper.me;
     }
 
     private void assign_given_name(RequestNameMessage requestNameMessage) {
         me.name = requestNameMessage.command.acceptStamp.toString();
-        env.dbProcs.put(me,this);
+        env.dbProcs.put(me, this);
     }
 
 
     private void giveMeAName() {
-        sendMessage((ProcessId)env.dbProcs.keySet().toArray()[0], new BayouMessage(me, new RequestNameMessage(me)));
+        sendMessage((ProcessId) env.dbProcs.keySet().toArray()[0], new BayouMessage(me, new RequestNameMessage(me)));
 //        while (true) {
 //            BayouMessage msg = getNextMessage();
 //            if (msg instanceof NameAssignedMessage) {
