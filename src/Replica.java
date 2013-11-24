@@ -12,7 +12,7 @@ public class Replica extends Process {
 
     int clock = 0;
     public PlayList playList;
-    List<BayouMessage> writeLog = new ArrayList<BayouMessage>();
+    List<BayouCommandMessage> writeLog = new ArrayList<BayouCommandMessage>();
     int csn = -1;
     boolean primary;
     ProcessId myGossiper;
@@ -37,7 +37,8 @@ public class Replica extends Process {
         logger.log(messageLevel, "Here I am: " + me);
 
         while (!stop_request()) {
-            BayouMessage msg = getNextMessage();
+            BayouMessage rawMsg = getNextMessage();
+            BayouCommandMessage msg = rawMsg.bayouCommandMessage;
             //DROP A MESSAGE IF COMMAND IS PRESENT AND IS AHEAD OF YOUR VERSION VECTOR
             if(msg.command != null) {
                 //ToDo: CHECK IF COMMAND IS ALREADY EXECUTED AND PRESENT IN MY WRITE_LOG
@@ -58,8 +59,8 @@ public class Replica extends Process {
                 c.updateAcceptStamp(clock, me);
                 playList.action(c);
                 logger.log(messageLevel, "PERFORMED " + c + "OUTPUT :" + c.response);
-                if(msg.src.equals(c.client))  //Only if I was the first replica then reply
-                    sendMessage(c.client, new ResponseMessage(me, c));
+                if(rawMsg.src.equals(c.client))  //Only if I was the first replica then reply
+                    sendMessage(c.client, new BayouMessage(me, new ResponseMessage(c)));
                 addToLog(msg);
             } else if (msg instanceof RequestNameMessage) {
                 RequestNameMessage message = (RequestNameMessage) msg;
@@ -74,12 +75,10 @@ public class Replica extends Process {
                     if(versionVector.get(acceptStamp.replica.name) == null)
                         versionVector.put(acceptStamp.replica.name, acceptStamp.acceptClock);
                 } else {                  //Command null means sent first to you
-                    ProcessId receiver = message.src;
                     message.command = new Command();
                     message.command.updateAcceptStamp(clock, me);
                     versionVector.put(message.command.acceptStamp.toString(), clock);
-                    message.updateSource(me);
-                    sendMessage(receiver, message);
+                    sendMessage(rawMsg.src, new BayouMessage(me, message));
 //                    sendMessage(message.src, new NameAssignedMessage(me, message.command.acceptStamp.toString()));
                     //ToDo: SEND ALL YOUR WRITE LOGS TO THIS NEW REPLICA
                 }
@@ -99,7 +98,7 @@ public class Replica extends Process {
         }
     }
 
-    private boolean my_first_request_name_response(BayouMessage message) {
+    private boolean my_first_request_name_response(BayouCommandMessage message) {
         if(message instanceof RequestNameMessage) {
             RequestNameMessage requestNameMessage = (RequestNameMessage)message;
             if(requestNameMessage.my_original_name.equals(me.name) && requestNameMessage.command != null &&
@@ -109,11 +108,11 @@ public class Replica extends Process {
         return false;
     }
 
-    private void addToLog(BayouMessage msg) {
+    private void addToLog(BayouCommandMessage msg) {
         writeLog.add(msg);
         //ToDo: POP BACK ALL ITEMS FROM STACK TO WRITE LOG
-        BayouMessage message = new BayouMessage();
-        sendMessage(myGossiper, msg);
+        BayouMessage message = new BayouMessage(me, msg);
+        sendMessage(myGossiper, message);
         clock++;
     }
 
@@ -129,8 +128,8 @@ public class Replica extends Process {
 
 
     private void giveMeAName() {
-        sendMessage((ProcessId)env.dbProcs.keySet().toArray()[0], new RequestNameMessage(me));
-//        while (true)  {
+        sendMessage((ProcessId)env.dbProcs.keySet().toArray()[0], new BayouMessage(me, new RequestNameMessage(me)));
+//        while (true) {
 //            BayouMessage msg = getNextMessage();
 //            if (msg instanceof NameAssignedMessage) {
 //                NameAssignedMessage nameMessage = (NameAssignedMessage) msg;

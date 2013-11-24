@@ -1,70 +1,86 @@
 public class BayouMessage {
-    Command command;
+    BayouCommandMessage bayouCommandMessage;
     ProcessId src;
     String src_name;
 
     public BayouMessage() {
     }
+//    public BayouMessage(BayouMessage bayouMessage, ProcessId new_src) {
+//        this.bayouCommandMessage = bayouMessage.bayouCommandMessage;
+//        updateSource(new_src);
+//    }
 
     public BayouMessage(Command command) {
-        this.command = command;
+        this.bayouCommandMessage = new BayouCommandMessage(command);
     }
 
+    public BayouMessage(ProcessId src, BayouCommandMessage bayouCommandMessage) {
+        this.bayouCommandMessage = bayouCommandMessage;
+        this.src = src;
+        this.src_name = src.name;
+    }
     public void updateSource(ProcessId new_src) {
         this.src = new_src;
         this.src_name = src.name;
     }
+
+    @Override
+    public String toString() {
+        return "BayouMessage{" +
+                "commandMsg=" + bayouCommandMessage +
+                ", src=" + src +
+                ", src_name='" + src_name + '\'' +
+                '}';
+    }
 }
 
-class RequestSessionMessage extends BayouMessage {
+class BayouCommandMessage {
+    Command command;
+
+    public BayouCommandMessage() {}
+
+    public BayouCommandMessage(Command command) {
+        this.command = command;
+    }
+
+}
+
+class RequestSessionMessage extends BayouCommandMessage {
 
     @Override
     public String toString() {
         return "RequestSessionMessage{" +
-                "src=" + src +
                 '}';
-    }
-
-    RequestSessionMessage(ProcessId src) {
-        this.src = src;
-        this.src_name = src.name;
     }
 }
 
-class SessionReplyMessage extends BayouMessage {
+class SessionReplyMessage extends BayouCommandMessage {
 
-    public SessionReplyMessage(ProcessId src, Command command) {
+    public SessionReplyMessage(Command command) {
         super(command);
-        this.src = src;
-        this.src_name = src.name;
     }
 
     @Override
     public String toString() {
         return "SessionReplyMessage{" +
-                "src=" + src +
                 "command=" + command +
                 '}';
     }
 }
 
 
-class RequestNameMessage extends BayouMessage {
+class RequestNameMessage extends BayouCommandMessage {
     String my_original_name;
-//    Command command;
 
     @Override
     public String toString() {
         return "RequestNameMessage{" +
-                "src=" + src +
                 "command=" + command +
                 "orig_name="+ my_original_name +
                 '}';
     }
 
     RequestNameMessage(ProcessId src) {
-        this.src = src;
-        this.src_name = src.name;
         this.my_original_name = src.name;
     }
 }
@@ -87,31 +103,21 @@ class RequestNameMessage extends BayouMessage {
 //    }
 //}
 
-class RetireMessage extends BayouMessage {
-//    Command command;
+class RetireMessage extends BayouCommandMessage {
 
     @Override
     public String toString() {
         return "RetireMessage{" +
-                "src=" + src +
                 "command=" + command +
                 '}';
     }
-
-    RetireMessage(ProcessId src) {
-        this.src = src;
-        this.src_name = src.name;
-    }
 }
 
-class RequestMessage extends BayouMessage {
+class RequestMessage extends BayouCommandMessage {
 //    RequestCommand requestCommand;
 
-    public RequestMessage(ProcessId src, RequestCommand requestCommand) {
+    public RequestMessage(RequestCommand requestCommand) {
         super(requestCommand);
-        this.src = src;
-        this.src_name = src.name;
-//        this.requestCommand = requestCommand;
     }
 
     @Override
@@ -122,13 +128,11 @@ class RequestMessage extends BayouMessage {
     }
 }
 
-class ResponseMessage extends BayouMessage {
+class ResponseMessage extends BayouCommandMessage {
 //    RequestCommand requestCommand;
 
-    public ResponseMessage(ProcessId src, RequestCommand requestCommand) {
+    public ResponseMessage(RequestCommand requestCommand) {
         super(requestCommand);
-        this.src = src;
-        this.src_name = src.name;
     }
 
     @Override

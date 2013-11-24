@@ -172,7 +172,7 @@ public class Env {
                 String[] opArr = arr[1].split(BODY_MSG_SEPERATOR, 2);
                 for (ProcessId p : clientProcs.keySet()) {
                     if (p.name.equals(opArr[0])) {
-                        sendMessage(p, new RequestMessage(this.pid, new RequestCommand(null, p, opArr[1])));
+                        sendMessage(p, new BayouMessage(this.pid, new RequestMessage(new RequestCommand(null, p, opArr[1]))));
                         return;
                     }
                     System.out.println("Could not find such db...type SHOW_DB for live dbs");

@@ -37,11 +37,12 @@ public class Client extends Process {
     void body() {
         logger.log(messageLevel, "Here I am: " + me);
         while (!stop_request()) {
-            BayouMessage msg = getNextMessage();
+            BayouMessage rawMsg = getNextMessage();
+            BayouCommandMessage msg = rawMsg.bayouCommandMessage;
 
             if (msg instanceof RequestMessage) {
                 checkCurrentDb();
-                sendMessage(currentDb, msg);
+                sendMessage(currentDb, new BayouMessage(me,msg));
             } else if (msg instanceof ResponseMessage) {
                 ResponseMessage message = (ResponseMessage) msg;
                 lastAcceptStamp = message.command.acceptStamp;
