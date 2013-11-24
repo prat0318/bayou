@@ -27,28 +27,6 @@ public class Replica extends Process {
         env.addProc(me, this);
     }
 
-    void action(RequestCommand c) {
-        String[] args = c.args.split(Env.TX_MSG_SEPARATOR);
-        switch (c.type) {
-            case ADD:
-                c.response = playList.add(args[0], args[1]);
-                break;
-            case DELETE:
-                c.response = playList.delete(args[0]);
-                break;
-            case EDIT:
-                c.response = playList.edit(args[0], args[1]);
-                break;
-            case SHOW:
-                c.response = playList.show();
-                break;
-            default:
-                c.response = "INVALID OPERATION TYPE";
-                break;
-        }
-        logger.log(messageLevel, "PERFORMED " + c + "OUTPUT :" + c.response);
-    }
-
 
     public void body() {
         if(!primary)
@@ -63,7 +41,8 @@ public class Replica extends Process {
                 clock++;
                 c.replica = this.me;
                 writeLog.add(c);
-                action(c);
+                playList.action(c);
+                logger.log(messageLevel, "PERFORMED " + c + "OUTPUT :" + c.response);
                 sendMessage(c.client, new ResponseMessage(me, c));
             } else if (msg instanceof GetNameMessage) {
                 GetNameMessage message = (GetNameMessage) msg;

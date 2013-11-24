@@ -58,5 +58,27 @@ public class PlayList {
     public String show() {
         return songMap.toString();
     }
+
+
+    void action(RequestCommand c) {
+        String[] args = c.args.split(Env.TX_MSG_SEPARATOR);
+        switch (c.type) {
+            case ADD:
+                c.response = add(args[0], args[1]);
+                break;
+            case DELETE:
+                c.response = delete(args[0]);
+                break;
+            case EDIT:
+                c.response = edit(args[0], args[1]);
+                break;
+            case SHOW:
+                c.response = show();
+                break;
+            default:
+                c.response = "INVALID OPERATION TYPE";
+                break;
+        }
+    }
 }
 
