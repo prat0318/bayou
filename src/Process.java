@@ -12,11 +12,17 @@ public abstract class Process extends Thread {
     Queue<BayouMessage> inbox = new Queue<BayouMessage>();
     int delay;
     public boolean assign_stop_request = false;
+    public boolean disconnect = false;
 
     public Level messageLevel = Level.FINER;
 
     public boolean stop_request(ProcessId whoGotKilled) {
         try {
+        synchronized (this){
+            while (disconnect){
+                this.wait();
+            }
+        }
             Thread.sleep(this.delay);
         } catch (InterruptedException e) {
             e.printStackTrace();

@@ -27,6 +27,9 @@ public class Replica extends Process {
         this.primary = primary;
         setLogger();
         loadProp();
+//        if(!primary){
+//            giveMeAName();
+//        }
         env.addProc(me, this);
     }
 
@@ -90,7 +93,11 @@ public class Replica extends Process {
             BayouMessage msg = getNextMessage();
             if (msg instanceof NameAssignedMessage) {
                 NameAssignedMessage nameMessage = (NameAssignedMessage) msg;
+                System.out.println(env.dbProcs.get(me));
                 me.name = nameMessage.name;
+                System.out.println(env.dbProcs.get(me));
+                //ToDo: Check what is happening there...
+                //env.dbProcs.put(me,this);
                 break;
             } else {
                 logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");

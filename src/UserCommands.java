@@ -6,6 +6,10 @@ public enum UserCommands {
     OP("OP <client_id> [ADD|DELETE|EDIT|SHOW$]$<SongName>$[<SongURL>]"),
     SHOW_CLIENTS("Shows all live clients"),
     SHOW_DB("Shows all live servers"),
+    CONNECT("CONNECT <db_name>"),
+    DISCONNECT("DISCONNECT <db_name>"),
+    PAUSE("PAUSE the system"),
+    CONTINUE("CONTINUE the execution"),
     HELP("Shows this stuff again"),
     ;
 

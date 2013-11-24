@@ -6,7 +6,7 @@
  * To change this template use File | Settings | File Templates.
  */
 public class RetireCommand extends Command{
-    RetireCommand(ProcessId client) {
-        super(client);
+    RetireCommand() {
+        super();
     }
 }
