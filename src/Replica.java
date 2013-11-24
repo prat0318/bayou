@@ -34,7 +34,10 @@ public class Replica extends Process {
     public void body() {
         if(!primary)
             giveMeAName();
+        else
+            start_gossip_thread();
         logger.log(messageLevel, "Here I am: " + me);
+
         while (!stop_request()) {
             BayouMessage msg = getNextMessage();
             //DROP A MESSAGE IF COMMAND IS PRESENT AND IS AHEAD OF YOUR VERSION VECTOR
@@ -44,25 +47,33 @@ public class Replica extends Process {
                     logger.log(messageLevel, "Dropping message, currClock="+currentClock+" "+msg.command);
                     continue;
             }
+
             if (msg instanceof RequestMessage) {
                 RequestCommand c = (RequestCommand)((RequestMessage) msg).command;
                 c.updateAcceptStamp(clock, me);
                 playList.action(c);
                 logger.log(messageLevel, "PERFORMED " + c + "OUTPUT :" + c.response);
-                sendMessage(c.client, new ResponseMessage(me, c));
+                if(msg.src.equals(c.client))  //Only if I was the first replica then reply
+                    sendMessage(c.client, new ResponseMessage(me, c));
                 clock++;
                 writeLog.add(msg);
             } else if (msg instanceof RequestNameMessage) {
                 RequestNameMessage message = (RequestNameMessage) msg;
                 if(message.command != null) {
                     AcceptStamp acceptStamp = message.command.acceptStamp;
+                    if(message.my_original_name.equals(me.name)) {
+                        assign_given_name(message);
+                        start_gossip_thread();
+                    }
                     if(versionVector.get(acceptStamp.replica.name) == null)
                         versionVector.put(acceptStamp.replica.name, acceptStamp.acceptClock);
                 } else {                  //Command null means sent first to you
                     message.command = new Command();
                     message.command.updateAcceptStamp(clock, me);
                     versionVector.put(message.command.acceptStamp.toString(), clock);
-                    sendMessage(message.src, new NameAssignedMessage(me, message.command.acceptStamp.toString()));
+                    message.updateSource(me);
+                    sendMessage(message.src, message);
+//                    sendMessage(message.src, new NameAssignedMessage(me, message.command.acceptStamp.toString()));
                     //ToDo: SEND ALL YOUR WRITE LOGS TO THIS NEW REPLICA
                 }
                 clock++;
@@ -83,21 +94,31 @@ public class Replica extends Process {
         }
     }
 
+    private void start_gossip_thread() {
+
+    }
+
+    private void assign_given_name(RequestNameMessage requestNameMessage) {
+        env.dbProcs.remove(me);
+        me.name = requestNameMessage.command.acceptStamp.toString();
+        env.dbProcs.put(me,this);
+    }
+
 
     private void giveMeAName() {
         sendMessage((ProcessId)env.dbProcs.keySet().toArray()[0], new RequestNameMessage(me));
-        while (true) {
-            BayouMessage msg = getNextMessage();
-            if (msg instanceof NameAssignedMessage) {
-                NameAssignedMessage nameMessage = (NameAssignedMessage) msg;
-                env.dbProcs.remove(me);
-                me.name = nameMessage.name;
-                env.dbProcs.put(me,this);
-                break;
-            } else {
-                logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");
-            }
-        }
+//        while (true) {
+//            BayouMessage msg = getNextMessage();
+//            if (msg instanceof NameAssignedMessage) {
+//                NameAssignedMessage nameMessage = (NameAssignedMessage) msg;
+//                env.dbProcs.remove(me);
+//                me.name = nameMessage.name;
+//                env.dbProcs.put(me,this);
+//                break;
+//            } else {
+//                logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");
+//            }
+//        }
     }
 
 }

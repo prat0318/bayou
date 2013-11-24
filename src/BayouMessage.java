@@ -9,9 +9,15 @@ public class BayouMessage {
     public BayouMessage(Command command) {
         this.command = command;
     }
+
+    public void updateSource(ProcessId new_src) {
+        this.src = new_src;
+        this.src_name = src.name;
+    }
 }
 
 class RequestNameMessage extends BayouMessage {
+    String my_original_name;
 //    Command command;
 
     @Override
@@ -19,32 +25,34 @@ class RequestNameMessage extends BayouMessage {
         return "RequestNameMessage{" +
                 "src=" + src +
                 "command=" + command +
+                "orig_name="+ my_original_name +
                 '}';
     }
 
     RequestNameMessage(ProcessId src) {
         this.src = src;
         this.src_name = src.name;
+        this.my_original_name = src.name;
     }
 }
 
-class NameAssignedMessage extends BayouMessage {
-    String name;
-
-    @Override
-    public String toString() {
-        return "RequestNameMessage{" +
-                "src=" + src +
-                "name=" + name +
-                '}';
-    }
-
-    NameAssignedMessage(ProcessId src, String name) {
-        this.src = src;
-        this.src_name = src.name;
-        this.name = name;
-    }
-}
+//class NameAssignedMessage extends BayouMessage {
+//    String name;
+//
+//    @Override
+//    public String toString() {
+//        return "RequestNameMessage{" +
+//                "src=" + src +
+//                "name=" + name +
+//                '}';
+//    }
+//
+//    NameAssignedMessage(ProcessId src, String name) {
+//        this.src = src;
+//        this.src_name = src.name;
+//        this.name = name;
+//    }
+//}
 
 class RetireMessage extends BayouMessage {
 //    Command command;
