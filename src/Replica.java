@@ -40,9 +40,8 @@ public class Replica extends Process {
             BayouMessage rawMsg = getNextMessage();
             BayouCommandMessage msg = rawMsg.bayouCommandMessage;
             //DROP A MESSAGE IF COMMAND IS PRESENT AND IS AHEAD OF YOUR VERSION VECTOR
-            if(msg.command != null) {
+            if(msg.command != null && msg.command.acceptStamp != null) {
                 //ToDo: CHECK IF COMMAND IS ALREADY EXECUTED AND PRESENT IN MY WRITE_LOG
-                System.out.println(msg.command.acceptStamp.replica);
                 Integer currentClock = versionVector.get(msg.command.acceptStamp.replica.name);
                 if(!my_first_request_name_response(msg))
                     if((currentClock != null && currentClock < msg.command.acceptStamp.acceptClock) ||

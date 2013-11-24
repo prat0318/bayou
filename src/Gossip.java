@@ -16,6 +16,8 @@ public class Gossip extends Process {
         logger.log(messageLevel, "Here I am: " + me);
 
         while (!stop_request() && !replica.stop_request()) {
+            BayouMessage rawMsg = getNextMessage();
+            BayouCommandMessage msg = rawMsg.bayouCommandMessage;
 
 
         }
