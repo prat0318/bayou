@@ -1,3 +1,5 @@
+import java.util.*;
+
 public class Gossip extends Process {
     Replica replica;
 
@@ -19,7 +21,18 @@ public class Gossip extends Process {
             BayouMessage rawMsg = getNextMessage();
             BayouCommandMessage msg = rawMsg.bayouCommandMessage;
 
-
+            //Shuffle all - exclude myself
+            Set<ProcessId> keys = new HashSet<ProcessId>(replica.versionVector.keySet());
+            keys.remove(replica.me);
+            List<ProcessId> shuffle = new ArrayList<ProcessId>(keys);
+            Collections.shuffle(shuffle);
+            int probRange = 1;
+            for(ProcessId replica : shuffle) {
+                if(new Random().nextInt(probRange) == 0) {
+                    sendMessage(replica, new BayouMessage(me, msg));
+                    probRange *= 2;
+                }
+            }
         }
 
     }

@@ -70,18 +70,19 @@ class SessionReplyMessage extends BayouCommandMessage {
 
 
 class RequestNameMessage extends BayouCommandMessage {
-    String my_original_name;
+//    String my_original_name;
+    ProcessId my_original_id;
 
     @Override
     public String toString() {
         return "RequestNameMessage{" +
                 "command=" + command +
-                "orig_name="+ my_original_name +
+                "orig_name="+ my_original_id +
                 '}';
     }
 
     RequestNameMessage(ProcessId src) {
-        this.my_original_name = src.name;
+        this.my_original_id = src;
     }
 }
 
