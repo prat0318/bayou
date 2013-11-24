@@ -20,14 +20,18 @@ public class Client extends Process {
 
     Properties loadProp() {
         super.loadProp();
-        String acceptStamp = prop.getProperty(me.name + "lastAcceptStamp");
-        String[] split = acceptStamp.split(AcceptStamp.SEPARATOR, 2);
-        int acceptClock = Integer.parseInt(split[0]);
-        for (ProcessId p : env.dbProcs.keySet()) {
-            if (p.name.equals(split[1])) {
-                this.lastAcceptStamp = new AcceptStamp(acceptClock, p);
-                ;
+        if (prop.containsKey(me.name + "lastAcceptStamp")) {
+            String acceptStamp = prop.getProperty(me.name + "lastAcceptStamp");
+            String[] split = acceptStamp.split(AcceptStamp.SEPARATOR, 2);
+            int acceptClock = Integer.parseInt(split[0]);
+            for (ProcessId p : env.dbProcs.keySet()) {
+                if (p.name.equals(split[1])) {
+                    this.lastAcceptStamp = new AcceptStamp(acceptClock, p);
+                    ;
+                }
             }
+        }else {
+            this.lastAcceptStamp = new AcceptStamp(0,(ProcessId)env.dbProcs.keySet().toArray()[0]);
         }
         return prop;
     }
@@ -42,7 +46,7 @@ public class Client extends Process {
 
             if (msg instanceof RequestMessage) {
                 checkCurrentDb();
-                sendMessage(currentDb, new BayouMessage(me,msg));
+                sendMessage(currentDb, new BayouMessage(me, msg));
             } else if (msg instanceof ResponseMessage) {
                 ResponseMessage message = (ResponseMessage) msg;
                 lastAcceptStamp = message.command.acceptStamp;
@@ -55,6 +59,6 @@ public class Client extends Process {
     private void checkCurrentDb() {
         if (!env.dbProcs.containsKey(currentDb))
             currentDb = env.dbProcs.get(lastAcceptStamp.replica).me;
-            //currentDb = (ProcessId) env.dbProcs.keySet().toArray()[0];
+        //currentDb = (ProcessId) env.dbProcs.keySet().toArray()[0];
     }
 }

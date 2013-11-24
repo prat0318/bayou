@@ -82,8 +82,8 @@ public class Env {
             int initialDbCount = Integer.parseInt(prop.getProperty("initialDbCount"));
             for (int i = 0; i < initialDbCount; i++) {
                 ProcessId pid = new ProcessId("db_" + i);
-                //boolean primaryFlag = i == 0;
-                Replica _ = new Replica(this, pid, true);
+                boolean primaryFlag = i == 0;
+                Replica _ = new Replica(this, pid, primaryFlag);
             }
         } catch (Exception e) {
             System.out.println("Error while reading the properties file for the Operation");
