@@ -61,8 +61,8 @@ public class PlayList {
 
 
     void action(RequestCommand c) {
-        String[] args = c.args.split(Env.TX_MSG_SEPARATOR);
-        switch (c.type) {
+        String[] args = c.op.split(Env.TX_MSG_SEPARATOR);
+        switch (c.opType) {
             case ADD:
                 c.response = add(args[0], args[1]);
                 break;

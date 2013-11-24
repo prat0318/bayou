@@ -5,8 +5,8 @@
  * Time: 10:47 PM
  * To change this template use File | Settings | File Templates.
  */
-public class AssignName extends Command{
-    AssignName(ProcessId client) {
-        super(client);
+public class AssignNameCommand extends Command{
+    AssignNameCommand() {
+        super();
     }
 }

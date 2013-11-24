@@ -6,46 +6,31 @@
  * To change this template use File | Settings | File Templates.
  */
 public class RequestCommand extends Command{
-    RequestType type;
-    String args;
+    ProcessId client;
+    OpType opType;
+    String op;
+    String response;
+    boolean no_op = false;
 
-    RequestCommand(ProcessId client, String requestString) {
-        super(client);
+    RequestCommand(AcceptStamp acceptStamp, ProcessId client, String requestString) {
+        super(acceptStamp);
         String[] splitRequest = requestString.split(Env.TX_MSG_SEPARATOR,2);
-        this.args = splitRequest[1];
-        this.type = RequestType.valueOf(splitRequest[0]);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof RequestCommand)) return false;
-
-        RequestCommand requestCommand = (RequestCommand) o;
-
-        if (!args.equals(requestCommand.args)) return false;
-        if (type != requestCommand.type) return false;
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = type.hashCode();
-        result = 31 * result + args.hashCode();
-        return result;
+        this.op = splitRequest[1];
+        this.opType = OpType.valueOf(splitRequest[0]);
+        this.client = client;
     }
 
     @Override
     public String toString() {
         return "RequestCommand{" +
-                "type=" + type +
-                ", args='" + args + "\', " +
+                "type=" + opType +
+                ", op='" + op + "\', " +
+                ", client=" + client +
                 super.toString() +
                 '}';
     }
 
-    public enum RequestType {
+    public enum OpType {
         ADD("Add"),
         DELETE("Delete"),
         EDIT("Edit"),
@@ -54,7 +39,7 @@ public class RequestCommand extends Command{
 
         public String type;
 
-        RequestType(String type) {
+        OpType(String type) {
             this.type = type;
         }
     }
