@@ -40,10 +40,17 @@ public class Replica extends Process {
             BayouMessage msg = getNextMessage();
             //DROP A MESSAGE IF COMMAND IS PRESENT AND IS AHEAD OF YOUR VERSION VECTOR
             if(msg.command != null) {
-                int currentClock = versionVector.get(msg.command.acceptStamp.replica.name);
-                if(currentClock < msg.command.acceptStamp.acceptClock)
-                    logger.log(messageLevel, "Dropping message, currClock="+currentClock+" "+msg.command);
-                    continue;
+                //ToDo: CHECK IF COMMAND IS ALREADY EXECUTED AND PRESENT IN MY WRITE_LOG
+                System.out.println(msg.command.acceptStamp.replica);
+                Integer currentClock = versionVector.get(msg.command.acceptStamp.replica.name);
+                if(!my_first_request_name_response(msg))
+                    if((currentClock != null && currentClock < msg.command.acceptStamp.acceptClock) ||
+                       (currentClock == null && msg.command.acceptStamp.acceptClock != 1) ) {
+                        logger.log(messageLevel, "Dropping message, currClock="+currentClock+" "+msg.command);
+                        continue;
+                    }
+                //ToDo: IF CANNOT BE ADDED AT THE END OF WRITE_LOG, POP ALL WRITE_LOGS AND
+                //ToDo: AND STORE IN SOME STACK - HANDLE ROLLBACK OF STATES
             }
 
             if (msg instanceof RequestMessage) {
@@ -63,14 +70,16 @@ public class Replica extends Process {
                         assign_given_name(message);
                         start_gossip_thread();
                     }
+                    //ToDo: HANDLE RETIRED MESSAGE
                     if(versionVector.get(acceptStamp.replica.name) == null)
                         versionVector.put(acceptStamp.replica.name, acceptStamp.acceptClock);
                 } else {                  //Command null means sent first to you
+                    ProcessId receiver = message.src;
                     message.command = new Command();
                     message.command.updateAcceptStamp(clock, me);
                     versionVector.put(message.command.acceptStamp.toString(), clock);
                     message.updateSource(me);
-                    sendMessage(message.src, message);
+                    sendMessage(receiver, message);
 //                    sendMessage(message.src, new NameAssignedMessage(me, message.command.acceptStamp.toString()));
                     //ToDo: SEND ALL YOUR WRITE LOGS TO THIS NEW REPLICA
                 }
@@ -90,8 +99,19 @@ public class Replica extends Process {
         }
     }
 
+    private boolean my_first_request_name_response(BayouMessage message) {
+        if(message instanceof RequestNameMessage) {
+            RequestNameMessage requestNameMessage = (RequestNameMessage)message;
+            if(requestNameMessage.my_original_name.equals(me.name) && requestNameMessage.command != null &&
+                    !versionVector.containsKey(requestNameMessage.command.acceptStamp))
+                return true;
+        }
+        return false;
+    }
+
     private void addToLog(BayouMessage msg) {
         writeLog.add(msg);
+        //ToDo: POP BACK ALL ITEMS FROM STACK TO WRITE LOG
         BayouMessage message = new BayouMessage();
         sendMessage(myGossiper, msg);
         clock++;
@@ -103,7 +123,6 @@ public class Replica extends Process {
     }
 
     private void assign_given_name(RequestNameMessage requestNameMessage) {
-        env.dbProcs.remove(me);
         me.name = requestNameMessage.command.acceptStamp.toString();
         env.dbProcs.put(me,this);
     }
@@ -111,7 +130,7 @@ public class Replica extends Process {
 
     private void giveMeAName() {
         sendMessage((ProcessId)env.dbProcs.keySet().toArray()[0], new RequestNameMessage(me));
-//        while (true) {
+//        while (true)  {
 //            BayouMessage msg = getNextMessage();
 //            if (msg instanceof NameAssignedMessage) {
 //                NameAssignedMessage nameMessage = (NameAssignedMessage) msg;

@@ -87,13 +87,13 @@ public abstract class Process extends Thread {
     }
 
     void sendMessage(ProcessId dst, BayouMessage msg) {
-        this.logger.log(messageLevel, me.name + "SENT >>" + dst + ">> : " + msg);
+        this.logger.log(messageLevel, me.name + ">> SENT >>" + dst + ">> : " + msg);
         env.sendMessage(dst, msg);
     }
 
     void deliver(BayouMessage msg) {
         inbox.enqueue(msg);
-        this.logger.log(messageLevel, me.name + "RCVD <<" + msg.src_name + "<< : " + msg);
+        this.logger.log(messageLevel, me.name + "<< RCVD <<" + msg.src_name + "<< : " + msg);
     }
 
     public void setLogger() {
