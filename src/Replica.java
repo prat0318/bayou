@@ -18,6 +18,7 @@ public class Replica extends Process {
     List<BayouMessage> writeLog = new ArrayList<BayouMessage>();
     int csn = -1;
     boolean primary;
+    ProcessId myGossiper;
     Map<String, Integer> versionVector = new HashMap<String, Integer>();
 
     public Replica(Env env, ProcessId me, boolean primary) {
@@ -55,12 +56,12 @@ public class Replica extends Process {
                 logger.log(messageLevel, "PERFORMED " + c + "OUTPUT :" + c.response);
                 if(msg.src.equals(c.client))  //Only if I was the first replica then reply
                     sendMessage(c.client, new ResponseMessage(me, c));
-                clock++;
-                writeLog.add(msg);
+                addToLog(msg);
             } else if (msg instanceof RequestNameMessage) {
                 RequestNameMessage message = (RequestNameMessage) msg;
                 if(message.command != null) {
                     AcceptStamp acceptStamp = message.command.acceptStamp;
+
                     if(message.my_original_name.equals(me.name)) {
                         assign_given_name(message);
                         start_gossip_thread();
@@ -76,8 +77,7 @@ public class Replica extends Process {
 //                    sendMessage(message.src, new NameAssignedMessage(me, message.command.acceptStamp.toString()));
                     //ToDo: SEND ALL YOUR WRITE LOGS TO THIS NEW REPLICA
                 }
-                clock++;
-                writeLog.add(message);
+                addToLog(message);
             } else if (msg instanceof RetireMessage) {
                 RetireMessage message = (RetireMessage) msg;
                 if(message.command != null) { //The replica present in command is retiring
@@ -86,16 +86,23 @@ public class Replica extends Process {
                     //ToDo: SEND ALL YOUR WRITE LOG TO ONE OF REPLICA, THEN BREAK ON ACK
                     message.command = new Command(new AcceptStamp(clock, me));
                 }
-                clock++;
-                writeLog.add(message);
+                addToLog(message);
             }else {
                 logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");
             }
         }
     }
 
-    private void start_gossip_thread() {
+    private void addToLog(BayouMessage msg) {
+        writeLog.add(msg);
+        BayouMessage message = new BayouMessage()
+        sendMessage(myGossiper, msg);
+        clock++;
+    }
 
+    private void start_gossip_thread() {
+        Gossip Gossiper = new Gossip(this, new ProcessId("Gossiper:"+me));
+        myGossiper = Gossiper.me;
     }
 
     private void assign_given_name(RequestNameMessage requestNameMessage) {
