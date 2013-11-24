@@ -1,4 +1,5 @@
 public class AcceptStamp {
+    static final String SEPARATOR = "#";
     public int acceptClock;
     public ProcessId replica;
 
@@ -8,8 +9,8 @@ public class AcceptStamp {
     }
 
     @Override
-    public String toString(){
-        return replica+":"+acceptClock;
+    public String toString() {
+        return replica + SEPARATOR + acceptClock;
     }
 
     @Override

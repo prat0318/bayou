@@ -1,5 +1,6 @@
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,9 +40,30 @@ public class Env {
         procs.remove(pid);
     }
 
+    void resetProperties() {
+        try {
+            FileInputStream in = new FileInputStream("config.properties");
+            Properties prop = new Properties();
+            prop.load(in);
+            in.close();
+
+            FileOutputStream out = new FileOutputStream("config.properties");
+            for (String p : prop.stringPropertyNames()) {
+                if(p.contains("client")){
+                    prop.remove(p);
+                }
+            }
+            prop.store(out, null);
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public static void main(String[] args) throws Exception {
         Env e = new Env();
+        e.resetProperties();
         e.run(args);
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         while (true) {
@@ -112,7 +134,7 @@ public class Env {
                 break;
             case SHOW_DB:
                 for (ProcessId p : dbProcs.keySet()) {
-                    System.out.print(p + " | " );
+                    System.out.print(p + " | ");
                 }
                 System.out.println();
                 break;

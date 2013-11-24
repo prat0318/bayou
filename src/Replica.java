@@ -7,9 +7,6 @@ import java.util.logging.Level;
 /**
  * Created with IntelliJ IDEA.
  * User: bansal
- * Date: 22/11/13
- * Time: 8:21 PM
- * To change this template use File | Settings | File Templates.
  */
 public class Replica extends Process {
 
@@ -95,7 +92,7 @@ public class Replica extends Process {
 
     private void addToLog(BayouMessage msg) {
         writeLog.add(msg);
-        BayouMessage message = new BayouMessage()
+        BayouMessage message = new BayouMessage();
         sendMessage(myGossiper, msg);
         clock++;
     }

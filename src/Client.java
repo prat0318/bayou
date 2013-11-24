@@ -1,8 +1,10 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public class Client extends Process {
     List<BayouMessage> queue = new ArrayList<BayouMessage>();
+    AcceptStamp lastAcceptStamp = null;
     ProcessId currentDb = null;
 //    int clientTimeout;
 
@@ -16,6 +18,21 @@ public class Client extends Process {
         checkCurrentDb();
     }
 
+    Properties loadProp() {
+        super.loadProp();
+        String acceptStamp = prop.getProperty(me.name + "lastAcceptStamp");
+        String[] split = acceptStamp.split(AcceptStamp.SEPARATOR, 2);
+        int acceptClock = Integer.parseInt(split[0]);
+        for (ProcessId p : env.dbProcs.keySet()) {
+            if (p.name.equals(split[1])) {
+                this.lastAcceptStamp = new AcceptStamp(acceptClock, p);
+                ;
+            }
+        }
+        return prop;
+    }
+
+
     @Override
     void body() {
         logger.log(messageLevel, "Here I am: " + me);
@@ -26,6 +43,9 @@ public class Client extends Process {
                 checkCurrentDb();
                 sendMessage(currentDb, msg);
             } else if (msg instanceof ResponseMessage) {
+                ResponseMessage message = (ResponseMessage) msg;
+                lastAcceptStamp = message.command.acceptStamp;
+                updateProperty(me.name + "lastAcceptStamp", lastAcceptStamp.toString());
                 System.out.println(msg);
             }
         }
@@ -33,6 +53,7 @@ public class Client extends Process {
 
     private void checkCurrentDb() {
         if (!env.dbProcs.containsKey(currentDb))
-            currentDb = (ProcessId) env.dbProcs.keySet().toArray()[0];
+            currentDb = env.dbProcs.get(lastAcceptStamp.replica).me;
+            //currentDb = (ProcessId) env.dbProcs.keySet().toArray()[0];
     }
 }

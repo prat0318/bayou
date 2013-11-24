@@ -1,4 +1,5 @@
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.logging.*;
@@ -58,6 +59,23 @@ public abstract class Process extends Thread {
             logger.log(Level.SEVERE, e.getMessage());
         }
         return prop;
+    }
+
+
+    public void updateProperty(String propertyName, String propertyValue) {
+        try {
+            FileInputStream in = new FileInputStream("config.properties");
+            Properties prop = new Properties();
+            prop.load(in);
+            in.close();
+
+            FileOutputStream out = new FileOutputStream("config.properties");
+            prop.setProperty(propertyName,  propertyValue );
+            prop.store(out, null);
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     BayouMessage getNextMessage() {

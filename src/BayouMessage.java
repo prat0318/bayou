@@ -4,8 +4,8 @@ public class BayouMessage {
     String src_name;
 
     public BayouMessage() {
-
     }
+
     public BayouMessage(Command command) {
         this.command = command;
     }
@@ -15,6 +15,39 @@ public class BayouMessage {
         this.src_name = src.name;
     }
 }
+
+class RequestSessionMessage extends BayouMessage {
+
+    @Override
+    public String toString() {
+        return "RequestSessionMessage{" +
+                "src=" + src +
+                '}';
+    }
+
+    RequestSessionMessage(ProcessId src) {
+        this.src = src;
+        this.src_name = src.name;
+    }
+}
+
+class SessionReplyMessage extends BayouMessage {
+
+    public SessionReplyMessage(ProcessId src, Command command) {
+        super(command);
+        this.src = src;
+        this.src_name = src.name;
+    }
+
+    @Override
+    public String toString() {
+        return "SessionReplyMessage{" +
+                "src=" + src +
+                "command=" + command +
+                '}';
+    }
+}
+
 
 class RequestNameMessage extends BayouMessage {
     String my_original_name;
