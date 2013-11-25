@@ -220,6 +220,7 @@ public class Env {
                 System.out.println("Connected all the db ");
                 break;
             case PAUSE:
+            //TODO: TO CHECK IF PAUSE AND CONTINUE DO NOT MEAN THAT THE SERVERS PAUSE BUT IT IS CLIENTS DO NOT GIVE ANY INPUT
                 for (ProcessId p : dbProcs.keySet()) {
                     System.out.println("to Set disconnect for " + p);
                     dbProcs.get(p).disconnect = true;
@@ -233,6 +234,8 @@ public class Env {
                     System.out.println(cc + " -- " + cc.getDescription());
                 }
                 break;
+            case  QUIT:
+                System.exit(1);
         }
 
     }

@@ -11,6 +11,7 @@ public enum UserCommands {
     PAUSE("PAUSE the system"),
     CONTINUE("CONTINUE the execution"),
     HELP("Shows this stuff again"),
+    QUIT("QUIT"),
     ;
 
     private String description;

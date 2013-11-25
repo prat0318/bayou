@@ -21,6 +21,7 @@ public abstract class Process extends Thread {
         try {
         synchronized (this){
             while (disconnect){
+                logger.log(messageLevel, "Getting disconnected..........");
                 this.wait();
             }
         }
