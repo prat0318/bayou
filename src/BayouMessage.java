@@ -45,6 +45,17 @@ class BayouCommandMessage {
         this.command = command;
     }
 
+    public int compare(BayouCommandMessage bayouCommandMessage) {
+        if(command == null || bayouCommandMessage.command == null) return -1;
+        return command.compare(bayouCommandMessage.command);
+    }
+
+    @Override
+    public String toString() {
+        return "BayouCommandMessage{" +
+                "command=" + command +
+                '}';
+    }
 }
 
 class RequestSessionMessage extends BayouCommandMessage {

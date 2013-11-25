@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 
 /**
@@ -12,8 +9,15 @@ public class Replica extends Process {
 
     int clock = 0;
     public PlayList playList;
-    List<BayouCommandMessage> writeLog = new ArrayList<BayouCommandMessage>();
-    int csn = -1;
+
+    Set<BayouCommandMessage> writeLog = new TreeSet<BayouCommandMessage>(new Comparator<BayouCommandMessage>(){
+        public int compare(BayouCommandMessage a, BayouCommandMessage b){
+//            if(a.equals(b)) return 0;
+            return a.compare(b);
+        }
+    });
+
+    int csn = 0;
     boolean primary;
     ProcessId myGossiper;
     Map<ProcessId, Integer> versionVector = new HashMap<ProcessId, Integer>();
@@ -28,6 +32,15 @@ public class Replica extends Process {
         env.addProc(me, this);
     }
 
+    public int getPositionInWriteLog(BayouCommandMessage b) {
+        Iterator<BayouCommandMessage> i = writeLog.iterator();
+        int index = 1;
+        while(i.hasNext()) {
+            if(i.next().equals(b)) return index;
+            index++;
+        }
+        return 0;
+    }
 
     public void body() {
         if (!primary)
@@ -40,8 +53,12 @@ public class Replica extends Process {
             BayouMessage rawMsg = getNextMessage();
             BayouCommandMessage msg = rawMsg.bayouCommandMessage;
             //DROP A MESSAGE IF COMMAND IS PRESENT AND IS AHEAD OF YOUR VERSION VECTOR
+            if(writeLog.contains(msg)) {
+                logger.log(messageLevel, "Ignoring message, Already have "+msg.command);
+                continue;
+            }
             if (msg.command != null && msg.command.acceptStamp != null) {
-                //ToDo: CHECK IF COMMAND IS ALREADY EXECUTED AND PRESENT IN MY WRITE_LOG
+                //ToDo: [DONE] CHECK IF COMMAND IS ALREADY EXECUTED AND PRESENT IN MY WRITE_LOG
                 Integer currentClock = versionVector.get(msg.command.acceptStamp.replica);
                 if (!my_first_request_name_response(msg))
                     if ((currentClock != null && currentClock < msg.command.acceptStamp.acceptClock) ||
@@ -49,7 +66,8 @@ public class Replica extends Process {
                         logger.log(messageLevel, "Dropping message, currClock=" + currentClock + " " + msg.command);
                         continue;
                     }
-                //ToDo: IF CANNOT BE ADDED AT THE END OF WRITE_LOG, POP ALL WRITE_LOGS AND
+                //ToDo: [NOT DOING RIGHT NOW] IF CANNOT BE ADDED AT THE END OF
+                //ToDo:  WRITE_LOG, POP ALL WRITE_LOGS AND
                 //ToDo: AND STORE IN SOME STACK - HANDLE ROLLBACK OF STATES
             }
 
@@ -109,9 +127,15 @@ public class Replica extends Process {
 
     private void addToLog(BayouCommandMessage msg) {
         writeLog.add(msg);
-        //ToDo: POP BACK ALL ITEMS FROM STACK TO WRITE LOG
-        if (msg.command.acceptStamp.replica.equals(me)) {
+        //ToDo: [NOT DOING] POP BACK ALL ITEMS FROM STACK TO WRITE LOG
+        if(msg.command.acceptStamp.replica.equals(me)) {
             clock++;
+        }
+        if(primary) {
+            msg.command.csn = getPositionInWriteLog(msg);
+        } else {
+            if(msg.command.csn == getPositionInWriteLog(msg))
+                logger.log(messageLevel, "MESSAGES STABLE TILL "+msg.command.csn+" WITH "+msg);
         }
         //Assuming accept-clock will always be there in Command
         //Assuming that version vector has entry for this replica
@@ -132,18 +156,6 @@ public class Replica extends Process {
 
     private void giveMeAName() {
         sendMessage((ProcessId) env.dbProcs.keySet().toArray()[0], new BayouMessage(me, new RequestNameMessage(me)));
-//        while (true) {
-//            BayouMessage msg = getNextMessage();
-//            if (msg instanceof NameAssignedMessage) {
-//                NameAssignedMessage nameMessage = (NameAssignedMessage) msg;
-//                env.dbProcs.remove(me);
-//                me.name = nameMessage.name;
-//                env.dbProcs.put(me,this);
-//                break;
-//            } else {
-//                logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");
-//            }
-//        }
     }
 
 }

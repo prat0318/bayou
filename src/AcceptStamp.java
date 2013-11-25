@@ -8,6 +8,12 @@ public class AcceptStamp {
         this.replica = replica;
     }
 
+    public int compare(AcceptStamp acceptStamp) {
+        int clockCompare = Integer.compare(this.acceptClock, acceptStamp.acceptClock);
+        if(clockCompare != 0) return clockCompare;
+        return this.replica.name.compareTo(acceptStamp.replica.name);
+    }
+
     @Override
     public String toString() {
         return replica + SEPARATOR + acceptClock;

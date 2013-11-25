@@ -8,6 +8,7 @@
 public class Command {
 
     AcceptStamp acceptStamp;
+    public int csn;
 
     public Command() {
     }
@@ -16,13 +17,20 @@ public class Command {
         this.acceptStamp = acceptStamp;
     }
 
+    public int compare(Command command) {
+        if(acceptStamp == null || command.acceptStamp == null) return -1;
+        return acceptStamp.compare(command.acceptStamp);
+    }
+
     public void updateAcceptStamp(int acceptClock, ProcessId replica){
         this.acceptStamp = new AcceptStamp(acceptClock, replica);
     }
+
     @Override
     public String toString() {
         return "Command {" +
-                "acceptStamp=" + acceptStamp +
+                " acceptStamp=" + acceptStamp +
+                ", csn=" + csn +
                 '}';
     }
 }
