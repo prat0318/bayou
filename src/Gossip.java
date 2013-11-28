@@ -30,7 +30,8 @@ public class Gossip extends Process {
             for(ProcessId replica : shuffle) {
                 if(new Random().nextInt(probRange) == 0) {
                     sendMessage(replica, new BayouMessage(me, msg));
-                    probRange *= 2;
+                    //Commenting below will result in probability 1
+//                    probRange *= 2;
                 }
             }
         }
