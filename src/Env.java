@@ -205,19 +205,24 @@ public class Env {
                 System.out.println("Could not find such db...type SHOW_DB for live dbs");
                 break;
             case DISCONNECT_FROM:
-                ProcessId disconnect1 = null;
-                ProcessId disconnect2 = null;
+                ProcessId disconnect1 = null; Process dc1 = null;
+                ProcessId disconnect2 = null; Process dc2 = null;
                 String[] disArr = arr[1].split(BODY_MSG_SEPERATOR, 2);
                 for (ProcessId p : procs.keySet()) {
                     if (p.name.equals(disArr[0])) {
-                        disconnect1 = p;
+                        disconnect1 = p; dc1 = procs.get(p);
                     } else if (p.name.equals(disArr[1])) {
-                        disconnect2 = p;
+                        disconnect2 = p; dc2 = procs.get(p);
                     }
                 }
                 if (disconnect1 != null && disconnect2 != null) {
                     procs.get(disconnect1).disconnectFrom.add(disconnect2);
+                    if(dc1 instanceof Replica && ((Replica) dc1).myGossiper != null)
+                        procs.get(((Replica) dc1).myGossiper).disconnectFrom.add(disconnect2);
+
                     procs.get(disconnect2).disconnectFrom.add(disconnect1);
+                    if(dc2 instanceof Replica && ((Replica) dc2).myGossiper != null)
+                        procs.get(((Replica) dc2).myGossiper).disconnectFrom.add(disconnect1);
                     //sendMessage(p, new BayouMessage(this.pid, new RequestMessage(new RequestCommand(null, p, "SHOW$"))));
                     System.out.println("Set disconnect between " + disconnect1 + " and " + disconnect2);
                     return;
