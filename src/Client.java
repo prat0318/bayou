@@ -10,13 +10,12 @@ public class Client extends Process {
         this.me = me;
         setLogger();
         loadProp();
-        env.addProc(me, this);
         if (checkDbCanBeConnectedTo(currentDb))
             this.currentDb = currentDb;
         if (this.currentDb == null) {
             setCurrentDb();
         }
-        establishSession();
+        env.addProc(me, this);
     }
 
     Properties loadProp() {
@@ -42,6 +41,7 @@ public class Client extends Process {
     @Override
     void body() {
         logger.log(messageLevel, "Here I am: " + me);
+        establishSession();
 
         while (!stop_request()) {
             BayouMessage rawMsg = getNextMessage();
@@ -85,7 +85,7 @@ public class Client extends Process {
 
             if (msg instanceof SessionReplyMessage) {
                 SessionReplyMessage message = (SessionReplyMessage) msg;
-                sessionEstablished = message.sessionGranted;
+                this.sessionEstablished = message.sessionGranted;
                 break;
             }
         }
