@@ -7,7 +7,7 @@ import java.util.logging.Level;
  */
 public class Replica extends Process {
 
-    int clock = 0;
+//    int clock = 0;
     public PlayList playList;
 
     Set<BayouCommandMessage> writeLog = new TreeSet<BayouCommandMessage>(new Comparator<BayouCommandMessage>(){
@@ -51,8 +51,10 @@ public class Replica extends Process {
     public void body() {
         if (!primary)
             giveMeAName();
-        else
+        else {
+            versionVector.put(me, 1);
             start_gossip_thread();
+        }
         logger.log(messageLevel, "Here I am: " + me);
 
         while (!stop_request()) {
@@ -128,7 +130,8 @@ public class Replica extends Process {
                 //ToDo: HANDLE RETIRED MESSAGE
                 if (versionVector.get(message.my_original_id) == null)
                     versionVector.put(message.my_original_id, message.command.acceptStamp.acceptClock);
-            } else {                  //Command null means sent first to you
+            } else {
+                //Command null means sent first to you
                 message.command = new Command();
                 message.command.updateAcceptStamp(versionVector.get(me), me);
                 versionVector.put(message.my_original_id, versionVector.get(me));
@@ -143,7 +146,7 @@ public class Replica extends Process {
                 versionVector.remove(message.command.acceptStamp.replica);
             } else { //Remove myself
                 //ToDo: SEND ALL YOUR WRITE LOG TO ONE OF REPLICA, THEN BREAK ON ACK
-                message.command = new Command(new AcceptStamp(clock, me));
+                message.command = new Command(new AcceptStamp(versionVector.get(me), me));
             }
             addToLog(message);
         } else if (msg instanceof RequestSessionMessage) {

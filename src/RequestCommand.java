@@ -26,6 +26,7 @@ public class RequestCommand extends Command{
                 "type=" + opType +
                 ", op='" + op + "\', " +
                 ", client=" + client +
+                ", RESPONSE: " + response +
                 super.toString() +
                 '}';
     }

@@ -94,7 +94,7 @@ class RequestNameMessage extends BayouCommandMessage {
     public String toString() {
         return "RequestNameMessage{" +
                 "command=" + command +
-                "orig_name=" + my_original_id +
+                ", orig_name=" + my_original_id +
                 '}';
     }
 

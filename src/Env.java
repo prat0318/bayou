@@ -74,32 +74,24 @@ public class Env {
         Env e = new Env();
         e.resetProperties();
         e.run(args);
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-        args = new String[1];
-        args[0] = "script";
-        if (args.length == 0) {
-            while (true) {
-                System.out.print("$ Enter new Command (HELP) > ");
-                String input = br.readLine();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(new File("script")));
+            String input;
+            while ((input = br.readLine()) != null) {
+                System.out.println("SCRIPT CMD: " + input);
                 e.operateOn(input);
+                delay();
             }
-        } else {
-            try {
-                scriptMode = true;
-                br = new BufferedReader(new FileReader(new File(args[0])));
-                while (scriptMode) {
-                    String input = br.readLine();
-                    if (input == null) {
-                        break;
-                    }
-                    System.out.println("SCRIPT CMD: " + input);
-                    e.operateOn(input);
-                    delay();
-                }
-            } catch (FileNotFoundException ex) {
-                ex.printStackTrace();
-            }
+        } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
+        }
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        while(true) {
+            System.out.print("$ Enter new Command (HELP) > ");
+            String input = br.readLine();
+            e.operateOn(input);
         }
     }
 
