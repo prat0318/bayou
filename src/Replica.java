@@ -62,7 +62,7 @@ public class Replica extends Process {
             BayouMessage rawMsg = getNextMessage();
             BayouCommandMessage msg = rawMsg.bayouCommandMessage;
             //DROP A MESSAGE IF COMMAND IS PRESENT AND IS AHEAD OF YOUR VERSION VECTOR
-            if(writeLog.contains(msg) && !isSentFromClient(msg)) {
+            if(checkForCSN(msg) && !isSentFromClient(msg)) {
                 logger.log(messageLevel, "Ignoring message, Already have " + msg);
                 continue;
             }
@@ -137,7 +137,6 @@ public class Replica extends Process {
                 message.command.updateAcceptStamp(versionVector.get(me), me);
                 versionVector.put(message.my_original_id, versionVector.get(me));
                 sendMessage(rawMsg.src, new BayouMessage(me, message));
-//                    sendMessage(message.src, new NameAssignedMessage(me, message.command.acceptStamp.toString()));
                 //ToDo: SEND ALL YOUR WRITE LOGS TO THIS NEW REPLICA
             }
             addToLog(message);
@@ -185,6 +184,7 @@ public class Replica extends Process {
         int min = Integer.MAX_VALUE;
         for(Integer i: versionVector.values())
             if(min > i) min = i;
+        logger.log(messageLevel, "current VV: "+versionVector);
         return min;
     }
 
@@ -196,25 +196,8 @@ public class Replica extends Process {
     }
 
     private void addToLog(BayouCommandMessage msg) {
-        if(writeLog.contains(msg)) return;
         writeLog.add(msg);
-        //ToDo: [NOT DOING] POP BACK ALL ITEMS FROM STACK TO WRITE LOG
 
-        if(primary) {
-            //assign csns
-            Iterator<BayouCommandMessage> i = writeLog.iterator();
-            int index = 1; int min = min_version_vector();
-            while(i.hasNext()) {
-                BayouCommandMessage singleMsg = i.next();
-                if(singleMsg.command.csn == 0 && singleMsg.command.acceptStamp.acceptClock < min)
-                    singleMsg.command.csn = index;
-                index++;
-            }
-//            msg.command.csn = getPositionInWriteLog(msg);
-        } else {
-            if(msg.command.csn == getPositionInWriteLog(msg))
-                logger.log(messageLevel, "MESSAGES STABLE TILL "+msg.command.csn+" WITH "+msg);
-        }
         //Assuming accept-clock will always be there in Command
         //Assuming that version vector has entry for this replica
         if(msg.command.acceptStamp.replica.equals(me))
@@ -223,7 +206,48 @@ public class Replica extends Process {
             versionVector.put(msg.command.acceptStamp.replica, msg.command.acceptStamp.acceptClock);
         //JUMP YOURSELF TO MAX VERSION VECTOR
         versionVector.put(me, max_version_vector());
+
+        if(primary) {
+            //assign csns
+            Iterator<BayouCommandMessage> i = writeLog.iterator();
+            int index = 1; int min = min_version_vector();
+            while(i.hasNext()) {
+                BayouCommandMessage singleMsg = i.next();
+//                logger.log(messageLevel, min + " : " + singleMsg.command.csn + "::" + singleMsg.command.acceptStamp.acceptClock);
+                if(singleMsg.command.csn == 0 && singleMsg.command.acceptStamp.acceptClock < min) {
+                    singleMsg.command.csn = index;
+                    logger.log(messageLevel, "MESSAGES STABLE TILL CSN:"+singleMsg.command.csn+" A# < "+min+" IN "+writeLog);
+                }
+                index++;
+            }
+        } else {
+//            logger.log(messageLevel, "CSN :"+msg.command.csn+ "Position :"+getPositionInWriteLog(msg));
+            if(msg.command.csn == getPositionInWriteLog(msg))
+                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:"+msg.command.csn+" WITH "+msg);
+        }
+
         sendMessage(myGossiper, new BayouMessage(me, msg));
+    }
+
+    private boolean checkForCSN(BayouCommandMessage msg) {
+        if(writeLog.contains(msg)){
+            if(msg.command.csn == getWriteLogMsg(msg).command.csn)
+                return true;
+            if(msg.command.csn == getPositionInWriteLog(msg))
+                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:"+msg.command.csn+" WITH "+msg);
+            writeLog.add(msg);
+            return true;
+        }
+        return false;
+    }
+
+    private BayouCommandMessage getWriteLogMsg(BayouCommandMessage msg) {
+        Iterator<BayouCommandMessage> i = writeLog.iterator();
+        while(i.hasNext()) {
+            BayouCommandMessage b = i.next();
+            if(b.equals(msg)) return b;
+        }
+        return null;
     }
 
     private void start_gossip_thread() {

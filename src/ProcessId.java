@@ -1,8 +1,10 @@
 public class ProcessId implements Comparable {
     String name;
+    String orig_name;
 
     public ProcessId(String name) {
         this.name = name;
+        this.orig_name = name;
     }
 
     @Override
@@ -19,7 +21,7 @@ public class ProcessId implements Comparable {
 
     @Override
     public int hashCode() {
-        return name != null ? name.hashCode() : 0;
+        return orig_name != null ? orig_name.hashCode() : 0;
     }
 
     public int compareTo(Object other) {
