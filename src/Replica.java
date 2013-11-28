@@ -58,7 +58,8 @@ public class Replica extends Process {
                 continue;
             }
             if (msg.command != null && msg.command.acceptStamp != null) {
-                //ToDo: [DONE] CHECK IF COMMAND IS ALREADY EXECUTED AND PRESENT IN MY WRITE_LOG
+                //ToDo: EXTRACT THE CSN OUT OF COMMAND
+
                 Integer currentClock = versionVector.get(msg.command.acceptStamp.replica);
                 if (!my_first_request_name_response(msg))
                     if ((currentClock != null && currentClock < msg.command.acceptStamp.acceptClock) ||
@@ -71,47 +72,55 @@ public class Replica extends Process {
                 //ToDo: AND STORE IN SOME STACK - HANDLE ROLLBACK OF STATES
             }
 
-            if (msg instanceof RequestMessage) {
-                RequestCommand c = (RequestCommand) ((RequestMessage) msg).command;
-                if (c.acceptStamp == null)
-                    c.updateAcceptStamp(clock, me);
-                playList.action(c);
-                logger.log(messageLevel, "PERFORMED " + c + "OUTPUT :" + c.response);
-                if (rawMsg.src.equals(c.client))  //Only if I was the first replica then reply
-                    sendMessage(c.client, new BayouMessage(me, new ResponseMessage(c)));
-            } else if (msg instanceof RequestNameMessage) {
-                RequestNameMessage message = (RequestNameMessage) msg;
-                if (message.command != null) {
-                    if (message.my_original_id.equals(me)) {
-                        assign_given_name(message);
-                        start_gossip_thread();
-                    }
-                    //ToDo: HANDLE RETIRED MESSAGE
-                    if (versionVector.get(message.my_original_id) == null)
-                        versionVector.put(message.my_original_id, message.command.acceptStamp.acceptClock);
-                } else {                  //Command null means sent first to you
-                    message.command = new Command();
-                    message.command.updateAcceptStamp(clock, me);
-                    versionVector.put(message.my_original_id, clock);
-                    sendMessage(rawMsg.src, new BayouMessage(me, message));
-//                    sendMessage(message.src, new NameAssignedMessage(me, message.command.acceptStamp.toString()));
-                    //ToDo: SEND ALL YOUR WRITE LOGS TO THIS NEW REPLICA
-                }
-                addToLog(message);
-            } else if (msg instanceof RetireMessage) {
-                RetireMessage message = (RetireMessage) msg;
-                if (message.command != null) { //The replica present in command is retiring
-                    versionVector.remove(message.command.acceptStamp.replica);
-                } else { //Remove myself
-                    //ToDo: SEND ALL YOUR WRITE LOG TO ONE OF REPLICA, THEN BREAK ON ACK
-                    message.command = new Command(new AcceptStamp(clock, me));
-                }
-                addToLog(message);
-            } else if (msg instanceof RequestSessionMessage) {
+            takeActionOnMessage(rawMsg);
+        }
+    }
 
-            } else {
-                logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");
+    private void takeActionOnMessage(BayouMessage rawMsg) {
+        BayouCommandMessage msg = rawMsg.bayouCommandMessage;
+        boolean sentFromClient = (msg.command != null && msg.command.acceptStamp == null);
+
+        if (msg instanceof RequestMessage) {
+            RequestCommand c = (RequestCommand) ((RequestMessage) msg).command;
+            if(sentFromClient)
+                c.updateAcceptStamp(versionVector.get(me), me);
+            playList.action(c);
+            logger.log(messageLevel, "PERFORMED " + c + "OUTPUT :" + c.response);
+            if(sentFromClient) //if (rawMsg.src.equals(c.client))  //Only if I was the first replica then reply
+                sendMessage(c.client, new BayouMessage(me, new ResponseMessage(c)));
+            addToLog(msg);
+        } else if (msg instanceof RequestNameMessage) {
+            RequestNameMessage message = (RequestNameMessage) msg;
+            if (message.command != null) {
+                if (message.my_original_id.equals(me)) {
+                    assign_given_name(message);
+                    start_gossip_thread();
+                }
+                //ToDo: HANDLE RETIRED MESSAGE
+                if (versionVector.get(message.my_original_id) == null)
+                    versionVector.put(message.my_original_id, message.command.acceptStamp.acceptClock);
+            } else {                  //Command null means sent first to you
+                message.command = new Command();
+                message.command.updateAcceptStamp(versionVector.get(me), me);
+                versionVector.put(message.my_original_id, versionVector.get(me));
+                sendMessage(rawMsg.src, new BayouMessage(me, message));
+//                    sendMessage(message.src, new NameAssignedMessage(me, message.command.acceptStamp.toString()));
+                //ToDo: SEND ALL YOUR WRITE LOGS TO THIS NEW REPLICA
             }
+            addToLog(message);
+        } else if (msg instanceof RetireMessage) {
+            RetireMessage message = (RetireMessage) msg;
+            if (message.command != null) { //The replica present in command is retiring
+                versionVector.remove(message.command.acceptStamp.replica);
+            } else { //Remove myself
+                //ToDo: SEND ALL YOUR WRITE LOG TO ONE OF REPLICA, THEN BREAK ON ACK
+                message.command = new Command(new AcceptStamp(clock, me));
+            }
+            addToLog(message);
+        } else if (msg instanceof RequestSessionMessage) {
+
+        } else {
+            logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");
         }
     }
 
@@ -125,21 +134,48 @@ public class Replica extends Process {
         return false;
     }
 
+    private int min_version_vector() {
+        int min = Integer.MAX_VALUE;
+        for(Integer i: versionVector.values())
+            if(min > i) min = i;
+        return min;
+    }
+
+    private int max_version_vector() {
+        int max = Integer.MIN_VALUE;
+        for(Integer i: versionVector.values())
+            if(max < i) max = i;
+        return max;
+    }
+
     private void addToLog(BayouCommandMessage msg) {
+        if(writeLog.contains(msg)) return;
         writeLog.add(msg);
         //ToDo: [NOT DOING] POP BACK ALL ITEMS FROM STACK TO WRITE LOG
-        if(msg.command.acceptStamp.replica.equals(me)) {
-            clock++;
-        }
+
         if(primary) {
-            msg.command.csn = getPositionInWriteLog(msg);
+            //assign csns
+            Iterator<BayouCommandMessage> i = writeLog.iterator();
+            int index = 1; int min = min_version_vector();
+            while(i.hasNext()) {
+                BayouCommandMessage singleMsg = i.next();
+                if(singleMsg.command.csn == 0 && singleMsg.command.acceptStamp.acceptClock < min)
+                    singleMsg.command.csn = index;
+                index++;
+            }
+//            msg.command.csn = getPositionInWriteLog(msg);
         } else {
             if(msg.command.csn == getPositionInWriteLog(msg))
                 logger.log(messageLevel, "MESSAGES STABLE TILL "+msg.command.csn+" WITH "+msg);
         }
         //Assuming accept-clock will always be there in Command
         //Assuming that version vector has entry for this replica
-        versionVector.put(msg.command.acceptStamp.replica, 1 + msg.command.acceptStamp.acceptClock);
+        if(msg.command.acceptStamp.replica.equals(me))
+            versionVector.put(me, 1 + versionVector.get(me));
+        else
+            versionVector.put(msg.command.acceptStamp.replica, msg.command.acceptStamp.acceptClock);
+        //JUMP YOURSELF TO MAX VERSION VECTOR
+        versionVector.put(me, max_version_vector());
         sendMessage(myGossiper, new BayouMessage(me, msg));
     }
 

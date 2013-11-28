@@ -13,13 +13,19 @@ public class Gossip extends Process {
         env.addProc(me, this);
     }
 
+    public void sendAllWriteLogTo(ProcessId replica) {
+        Iterator<BayouCommandMessage> i = this.replica.writeLog.iterator();
+        while(i.hasNext())
+            sendMessage(replica, new BayouMessage(me, i.next()));
+    }
+
     @Override
     void body() {
         logger.log(messageLevel, "Here I am: " + me);
 
         while (!stop_request() && !replica.stop_request()) {
             BayouMessage rawMsg = getNextMessage();
-            BayouCommandMessage msg = rawMsg.bayouCommandMessage;
+//            BayouCommandMessage msg = rawMsg.bayouCommandMessage;
 
             //Shuffle all - exclude myself
             Set<ProcessId> keys = new HashSet<ProcessId>(replica.versionVector.keySet());
@@ -29,7 +35,8 @@ public class Gossip extends Process {
             int probRange = 1;
             for(ProcessId replica : shuffle) {
                 if(new Random().nextInt(probRange) == 0) {
-                    sendMessage(replica, new BayouMessage(me, msg));
+                    sendAllWriteLogTo(replica);
+//                    sendMessage(replica, new BayouMessage(me, msg));
                     //Commenting below will result in probability 1
 //                    probRange *= 2;
                 }
