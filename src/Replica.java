@@ -42,6 +42,12 @@ public class Replica extends Process {
         return 0;
     }
 
+    public boolean isItTheBiggest(BayouCommandMessage b) {
+        Iterator<BayouCommandMessage> i = writeLog.iterator();
+        while(i.hasNext()) if(i.next().compare(b) > 0) return false;
+        return true;
+    }
+
     public void body() {
         if (!primary)
             giveMeAName();
@@ -57,25 +63,48 @@ public class Replica extends Process {
                 logger.log(messageLevel, "Ignoring message, Already have "+msg.command);
                 continue;
             }
-            if (msg.command != null && msg.command.acceptStamp != null) {
-                //ToDo: EXTRACT THE CSN OUT OF COMMAND
-
-                Integer currentClock = versionVector.get(msg.command.acceptStamp.replica);
-                if (!my_first_request_name_response(msg))
-                    if ((currentClock != null && currentClock < msg.command.acceptStamp.acceptClock) ||
-                            (currentClock == null && msg.command.acceptStamp.acceptClock != 1)) {
-                        logger.log(messageLevel, "Dropping message, currClock=" + currentClock + " " + msg.command);
-                        continue;
-                    }
-                //ToDo: [NOT DOING RIGHT NOW] IF CANNOT BE ADDED AT THE END OF
-                //ToDo:  WRITE_LOG, POP ALL WRITE_LOGS AND
-                //ToDo: AND STORE IN SOME STACK - HANDLE ROLLBACK OF STATES
+//            if (msg.command != null && msg.command.acceptStamp != null) {
+//                //ToDo: EXTRACT THE CSN OUT OF COMMAND
+//
+//                Integer currentClock = versionVector.get(msg.command.acceptStamp.replica);
+//                if (!my_first_request_name_response(msg))
+//                    if ((currentClock != null && currentClock < msg.command.acceptStamp.acceptClock) ||
+//                            (currentClock == null && msg.command.acceptStamp.acceptClock != 1)) {
+//                        logger.log(messageLevel, "Dropping message, currClock=" + currentClock + " " + msg.command);
+//                        continue;
+//                    }
+//                //ToDo: [NOT DOING RIGHT NOW] IF CANNOT BE ADDED AT THE END OF
+//                //ToDo:  WRITE_LOG, POP ALL WRITE_LOGS AND
+//                //ToDo: AND STORE IN SOME STACK - HANDLE ROLLBACK OF STATES
+//            }
+            if(isItTheBiggest(msg))
+                takeActionOnMessage(rawMsg);
+            else {               //Recreate the playlist
+                playList.clear();
+                takeActionOnPreviousMessages(rawMsg);
+                takeActionOnMessage(rawMsg);
+                takeActionOnNextMessages(rawMsg);
             }
-
-            takeActionOnMessage(rawMsg);
         }
     }
 
+    private void takeActionOnNextMessages(BayouMessage rawMsg) {
+        Iterator<BayouCommandMessage> i = writeLog.iterator();
+        while(i.hasNext()) {
+            BayouCommandMessage msg = i.next();
+            if(msg.compare(rawMsg.bayouCommandMessage) <= 0) continue;
+            if(msg instanceof RequestMessage) takeActionOnMessage(new BayouMessage(me, msg));
+        }
+    }
+
+    private void takeActionOnPreviousMessages(BayouMessage rawMsg) {
+        Iterator<BayouCommandMessage> i = writeLog.iterator();
+        while(i.hasNext()) {
+            BayouCommandMessage msg = i.next();
+            if(msg.compare(rawMsg.bayouCommandMessage) >= 0) continue;
+            if(msg instanceof RequestMessage) takeActionOnMessage(new BayouMessage(me, msg));
+        }
+    }
     private void takeActionOnMessage(BayouMessage rawMsg) {
         BayouCommandMessage msg = rawMsg.bayouCommandMessage;
         boolean sentFromClient = (msg.command != null && msg.command.acceptStamp == null);
