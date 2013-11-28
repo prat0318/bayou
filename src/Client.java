@@ -41,7 +41,7 @@ public class Client extends Process {
             if (msg instanceof SessionReplyMessage) {
                 sessionEstablished = true;
             } else if (msg instanceof RequestMessage) {
-                if (checkCurrentDb() != null)
+                if (checkCurrentDb() != null )
                     sendMessage(currentDb, new BayouMessage(me, msg));
             } else if (msg instanceof ResponseMessage) {
                 ResponseMessage message = (ResponseMessage) msg;
@@ -53,14 +53,14 @@ public class Client extends Process {
     }
 
     private ProcessId checkCurrentDb() {
-        if (lastAcceptStamp == null) {
+        if (lastAcceptStamp == null && !disconnectFrom.contains(env.dbProcs.keySet().toArray()[0])) {
             currentDb = (ProcessId) env.dbProcs.keySet().toArray()[0];
             sendMessage(currentDb, new BayouMessage(me, new RequestSessionMessage(new Command(lastAcceptStamp))));
             return currentDb;
         } else if (env.dbProcs.containsKey(lastAcceptStamp.replica)) {
             currentDb = env.dbProcs.get(lastAcceptStamp.replica).me;
             for (int i = 0; i < env.dbProcs.size(); i++) {
-                if (env.dbProcs.get(currentDb).disconnect) {
+                if (env.dbProcs.get(currentDb).disconnect || disconnectFrom.contains(currentDb)) {
                     currentDb = (ProcessId) env.dbProcs.keySet().toArray()[i];
                 } else {
                     sendMessage(currentDb, new BayouMessage(me, new RequestSessionMessage(new Command(lastAcceptStamp))));
