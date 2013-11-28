@@ -61,8 +61,8 @@ public class Env {
             e.printStackTrace();
         }
     }
-    private static void delay()
-    {
+
+    private static void delay() {
         try {
             Thread.sleep(delay_interval);
         } catch (InterruptedException e) {
@@ -91,10 +91,10 @@ public class Env {
                 br = new BufferedReader(new FileReader(new File(args[0])));
                 while (scriptMode) {
                     String input = br.readLine();
-                    if(input == null){
+                    if (input == null) {
                         break;
                     }
-                    System.out.println("SCRIPT CMD: "+input);
+                    System.out.println("SCRIPT CMD: " + input);
                     e.operateOn(input);
                     delay();
                 }
@@ -137,6 +137,11 @@ public class Env {
                 pid = new ProcessId("client_" + maxClientNo++);
                 Client _client = new Client(this, pid);
                 System.out.println("Started new Client " + pid);
+                break;
+            case RESTART_CLIENT:
+                pid = new ProcessId(arr[1]);
+                Client _reclient = new Client(this, pid);
+                System.out.println("Restarted the Client " + pid);
                 break;
             case STOP_CLIENT:
                 for (ProcessId p : clientProcs.keySet()) {
@@ -206,8 +211,8 @@ public class Env {
                         sendMessage(p, new BayouMessage(this.pid, new RequestMessage(new RequestCommand(null, p, opArr[1]))));
                         return;
                     }
-                    System.out.println("Could not find such db...type SHOW_DB for live dbs");
                 }
+                System.out.println("Could not find such db...type SHOW_CLIENTS for live clients");
                 break;
             case CONTINUE:
                 for (ProcessId p : dbProcs.keySet()) {
@@ -220,7 +225,7 @@ public class Env {
                 System.out.println("Connected all the db ");
                 break;
             case PAUSE:
-            //TODO: TO CHECK IF PAUSE AND CONTINUE DO NOT MEAN THAT THE SERVERS PAUSE BUT IT IS CLIENTS DO NOT GIVE ANY INPUT
+                //TODO: TO CHECK IF PAUSE AND CONTINUE DO NOT MEAN THAT THE SERVERS PAUSE BUT IT IS CLIENTS DO NOT GIVE ANY INPUT
                 for (ProcessId p : dbProcs.keySet()) {
                     System.out.println("to Set disconnect for " + p);
                     dbProcs.get(p).disconnect = true;
@@ -234,7 +239,7 @@ public class Env {
                     System.out.println(cc + " -- " + cc.getDescription());
                 }
                 break;
-            case  QUIT:
+            case QUIT:
                 System.exit(1);
         }
 

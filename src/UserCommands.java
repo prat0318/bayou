@@ -1,6 +1,7 @@
 public enum UserCommands {
     START_CLIENT("START_CLIENT"),
     STOP_CLIENT("STOP_CLIENT <client_id>"),
+    RESTART_CLIENT("RESTART_CLIENT <client_id>"),
     JOIN("JOIN"),
     LEAVE("LEAVE <db_id>"),
     OP("OP <client_id> [ADD|DELETE|EDIT|SHOW$]$<SongName>$[<SongURL>]"),

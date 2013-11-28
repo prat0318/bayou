@@ -21,9 +21,9 @@ public class Client extends Process {
         if (prop.containsKey(me.name + "lastAcceptStamp")) {
             String acceptStamp = prop.getProperty(me.name + "lastAcceptStamp");
             String[] split = acceptStamp.split(AcceptStamp.SEPARATOR, 2);
-            int acceptClock = Integer.parseInt(split[0]);
+            int acceptClock = Integer.parseInt(split[1]);
             for (ProcessId p : env.dbProcs.keySet()) {
-                if (p.name.equals(split[1])) {
+                if (p.name.equals(split[0])) {
                     this.lastAcceptStamp = new AcceptStamp(acceptClock, p);
                 }
             }
