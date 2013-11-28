@@ -151,7 +151,17 @@ public class Replica extends Process {
             }
             addToLog(message);
         } else if (msg instanceof RequestSessionMessage) {
-
+          RequestSessionMessage message = (RequestSessionMessage) msg;
+            if(message.lastUpdatedStamp == null){
+                //CHECK my vector clock contains the required accept Stamp
+                sendMessage(rawMsg.src,new BayouMessage(me, new SessionReplyMessage(true)));
+            }else {
+                if(versionVector.containsKey(message.lastUpdatedStamp.replica) &&
+                        (versionVector.get(message.lastUpdatedStamp.replica) >= (message.lastUpdatedStamp.acceptClock) ))
+                sendMessage(rawMsg.src,new BayouMessage(me, new SessionReplyMessage(true)));
+                else
+                    sendMessage(rawMsg.src,new BayouMessage(me, new SessionReplyMessage(false)));
+            }
         } else {
             logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");
         }

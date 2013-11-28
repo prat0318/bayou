@@ -74,22 +74,21 @@ class RequestSessionMessage extends BayouCommandMessage {
 }
 
 class SessionReplyMessage extends BayouCommandMessage {
-
-    public SessionReplyMessage(Command command) {
-        super(command);
+    boolean sessionGranted;
+    public SessionReplyMessage(boolean sessionGranted) {
+        this.sessionGranted = sessionGranted;
     }
 
     @Override
     public String toString() {
         return "SessionReplyMessage{" +
-                "command=" + command +
+                "sessionGranted=" + sessionGranted +
                 '}';
     }
 }
 
 
 class RequestNameMessage extends BayouCommandMessage {
-    //    String my_original_name;
     ProcessId my_original_id;
 
     @Override
@@ -116,7 +115,6 @@ class RetireMessage extends BayouCommandMessage {
 }
 
 class RequestMessage extends BayouCommandMessage {
-//    RequestCommand requestCommand;
 
     public RequestMessage(RequestCommand requestCommand) {
         super(requestCommand);
@@ -131,7 +129,6 @@ class RequestMessage extends BayouCommandMessage {
 }
 
 class ResponseMessage extends BayouCommandMessage {
-//    RequestCommand requestCommand;
 
     public ResponseMessage(RequestCommand requestCommand) {
         super(requestCommand);

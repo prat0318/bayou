@@ -14,15 +14,7 @@ public class Client extends Process {
         if (checkDbCanBeConnectedTo(currentDb))
             this.currentDb = currentDb;
         if (this.currentDb == null) {
-            for (int i = 0; i < env.dbProcs.size(); i++) {
-                if (checkDbCanBeConnectedTo((ProcessId) env.dbProcs.keySet().toArray()[i])) {
-                    this.currentDb = (ProcessId) env.dbProcs.keySet().toArray()[i];
-                    break;
-                }
-            }
-            System.out.println("ALL the DB's are disconnected....");
-            logger.log(messageLevel, "ALL the DB's are disconnected....");
-            //TODO: System.exit in this case as the whole set of replicas is disconnected the client cannot do anything
+            setCurrentDb();
         }
         establishSession();
     }
@@ -69,6 +61,18 @@ public class Client extends Process {
         }
     }
 
+    private void setCurrentDb(){
+        for (int i = 0; i < env.dbProcs.size(); i++) {
+            if (checkDbCanBeConnectedTo((ProcessId) env.dbProcs.keySet().toArray()[i])) {
+                this.currentDb = (ProcessId) env.dbProcs.keySet().toArray()[i];
+                break;
+            }
+        }
+        //TODO: System.exit in this case as the whole set of replicas is disconnected the client cannot do anything
+        //System.out.println("ALL the DB's are disconnected....");
+        //logger.log(messageLevel, "ALL the DB's are disconnected....");
+    }
+
     private boolean checkDbCanBeConnectedTo(ProcessId p) {
         return !(!env.dbProcs.containsKey(p) || env.dbProcs.get(p).disconnect || disconnectFrom.contains(p));
     }
@@ -80,7 +84,8 @@ public class Client extends Process {
             BayouCommandMessage msg = rawMsg.bayouCommandMessage;
 
             if (msg instanceof SessionReplyMessage) {
-                sessionEstablished = true;
+                SessionReplyMessage message = (SessionReplyMessage) msg;
+                sessionEstablished = message.sessionGranted;
                 break;
             }
         }
