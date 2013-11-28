@@ -244,7 +244,6 @@ public class Env {
 
                 System.out.println("Could not find such dbs...type SHOW_DB for live dbs");
                 break;
-
             case OP:
                 String[] opArr = arr[1].split(BODY_MSG_SEPERATOR, 2);
                 for (ProcessId p : clientProcs.keySet()) {

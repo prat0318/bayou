@@ -11,8 +11,20 @@ public class Client extends Process {
         setLogger();
         loadProp();
         env.addProc(me, this);
-        this.currentDb = currentDb;
-        checkCurrentDb();
+        if (checkDbCanBeConnectedTo(currentDb))
+            this.currentDb = currentDb;
+        if (this.currentDb == null) {
+            for (int i = 0; i < env.dbProcs.size(); i++) {
+                if (checkDbCanBeConnectedTo((ProcessId) env.dbProcs.keySet().toArray()[i])) {
+                    this.currentDb = (ProcessId) env.dbProcs.keySet().toArray()[i];
+                    break;
+                }
+            }
+            System.out.println("ALL the DB's are disconnected....");
+            logger.log(messageLevel, "ALL the DB's are disconnected....");
+            //TODO: System.exit in this case as the whole set of replicas is disconnected the client cannot do anything
+        }
+        establishSession();
     }
 
     Properties loadProp() {
@@ -24,6 +36,10 @@ public class Client extends Process {
             for (ProcessId p : env.dbProcs.keySet()) {
                 if (p.name.equals(split[0])) {
                     this.lastAcceptStamp = new AcceptStamp(acceptClock, p);
+                    ProcessId processId = env.dbProcs.get(lastAcceptStamp.replica).me;
+                    if (checkDbCanBeConnectedTo(processId)) {
+                        this.currentDb = processId;
+                    }
                 }
             }
         }
@@ -42,7 +58,7 @@ public class Client extends Process {
             if (msg instanceof SessionReplyMessage) {
                 sessionEstablished = true;
             } else if (msg instanceof RequestMessage) {
-                if (checkCurrentDb() != null )
+                if (checkDbCanBeConnectedTo(currentDb))
                     sendMessage(currentDb, new BayouMessage(me, msg));
             } else if (msg instanceof ResponseMessage) {
                 ResponseMessage message = (ResponseMessage) msg;
@@ -53,25 +69,23 @@ public class Client extends Process {
         }
     }
 
-    private ProcessId checkCurrentDb() {
-        if (lastAcceptStamp == null && !disconnectFrom.contains(env.dbProcs.keySet().toArray()[0])) {
-            if(currentDb == null) currentDb = (ProcessId) env.dbProcs.keySet().toArray()[0];
-            sendMessage(currentDb, new BayouMessage(me, new RequestSessionMessage(new Command(lastAcceptStamp))));
-            return currentDb;
-        } else if (env.dbProcs.containsKey(lastAcceptStamp.replica)) {
-            currentDb = env.dbProcs.get(lastAcceptStamp.replica).me;
-            for (int i = 0; i < env.dbProcs.size(); i++) {
-                if (env.dbProcs.get(currentDb).disconnect || disconnectFrom.contains(currentDb)) {
-                    currentDb = (ProcessId) env.dbProcs.keySet().toArray()[i];
-                } else {
-                    sendMessage(currentDb, new BayouMessage(me, new RequestSessionMessage(new Command(lastAcceptStamp))));
-                    return currentDb;
-                }
+    private boolean checkDbCanBeConnectedTo(ProcessId p) {
+        if (!env.dbProcs.containsKey(p) || env.dbProcs.get(p).disconnect || disconnectFrom.contains(p)) {
+            return false;
+        }
+        return true;
+    }
+
+    private ProcessId establishSession() {
+        sendMessage(currentDb, new BayouMessage(me, new RequestSessionMessage(new Command(lastAcceptStamp))));
+        while (!stop_request()) {
+            BayouMessage rawMsg = getNextMessage();
+            BayouCommandMessage msg = rawMsg.bayouCommandMessage;
+
+            if (msg instanceof SessionReplyMessage) {
+                sessionEstablished = true;
+                break;
             }
-            sessionEstablished = false;
-            System.out.println("ALL the DB's are disconnected....");
-            logger.log(messageLevel, "ALL the DB's are disconnected....");
-            return null;
         }
         return currentDb;
     }
