@@ -1,7 +1,9 @@
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.*;
 
 public abstract class Process extends Thread {
@@ -14,6 +16,7 @@ public abstract class Process extends Thread {
     int delay;
     public boolean assign_stop_request = false;
     public boolean disconnect = false;
+    public Set<ProcessId> disconnectFrom = new HashSet<ProcessId>();
 
     public Level messageLevel = Level.FINER;
 
@@ -87,9 +90,14 @@ public abstract class Process extends Thread {
         return inbox.bdequeue(timeout);
     }
 
-    void sendMessage(ProcessId dst, BayouMessage msg) {
+    boolean sendMessage(ProcessId dst, BayouMessage msg) {
+        if(disconnectFrom.contains(dst)){
+            this.logger.log(messageLevel, me.name + ">> SENDING FAILED TO >>" + dst + ">> : " + msg);
+            return false;
+        }
         this.logger.log(messageLevel, me.name + ">> SENT >>" + dst + ">> : " + msg);
         env.sendMessage(dst, msg);
+        return true;
     }
 
     void deliver(BayouMessage msg) {
