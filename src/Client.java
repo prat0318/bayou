@@ -70,14 +70,11 @@ public class Client extends Process {
     }
 
     private boolean checkDbCanBeConnectedTo(ProcessId p) {
-        if (!env.dbProcs.containsKey(p) || env.dbProcs.get(p).disconnect || disconnectFrom.contains(p)) {
-            return false;
-        }
-        return true;
+        return !(!env.dbProcs.containsKey(p) || env.dbProcs.get(p).disconnect || disconnectFrom.contains(p));
     }
 
     private ProcessId establishSession() {
-        sendMessage(currentDb, new BayouMessage(me, new RequestSessionMessage(new Command(lastAcceptStamp))));
+        sendMessage(currentDb, new BayouMessage(me, new RequestSessionMessage(lastAcceptStamp)));
         while (!stop_request()) {
             BayouMessage rawMsg = getNextMessage();
             BayouCommandMessage msg = rawMsg.bayouCommandMessage;

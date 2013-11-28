@@ -43,6 +43,7 @@ public class Replica extends Process {
     }
 
     public boolean isItTheBiggest(BayouCommandMessage b) {
+        if(isSentFromClient(b)) return true;
         Iterator<BayouCommandMessage> i = writeLog.iterator();
         while(i.hasNext()) if(i.next().compare(b) > 0) return false;
         return true;
@@ -61,8 +62,8 @@ public class Replica extends Process {
             BayouMessage rawMsg = getNextMessage();
             BayouCommandMessage msg = rawMsg.bayouCommandMessage;
             //DROP A MESSAGE IF COMMAND IS PRESENT AND IS AHEAD OF YOUR VERSION VECTOR
-            if(writeLog.contains(msg)) {
-                logger.log(messageLevel, "Ignoring message, Already have "+msg.command);
+            if(writeLog.contains(msg) && !isSentFromClient(msg)) {
+                logger.log(messageLevel, "Ignoring message, Already have " + msg);
                 continue;
             }
 //            if (msg.command != null && msg.command.acceptStamp != null) {
@@ -109,7 +110,7 @@ public class Replica extends Process {
     }
     private void takeActionOnMessage(BayouMessage rawMsg) {
         BayouCommandMessage msg = rawMsg.bayouCommandMessage;
-        boolean sentFromClient = (msg.command != null && msg.command.acceptStamp == null);
+        boolean sentFromClient = isSentFromClient(msg);
 
         if (msg instanceof RequestMessage) {
             RequestCommand c = (RequestCommand) ((RequestMessage) msg).command;
@@ -154,6 +155,10 @@ public class Replica extends Process {
         } else {
             logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");
         }
+    }
+
+    private boolean isSentFromClient(BayouCommandMessage msg) {
+        return ((msg.command == null) || (msg.command.acceptStamp == null));
     }
 
     private boolean my_first_request_name_response(BayouCommandMessage message) {

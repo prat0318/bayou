@@ -252,7 +252,7 @@ public class Env {
                         return;
                     }
                 }
-                System.out.println("Could not find such db...type SHOW_CLIENTS for live clients");
+                System.out.println("Could not find such client...type SHOW_CLIENTS for live clients");
                 break;
             case CONTINUE:
                 for (ProcessId p : dbProcs.keySet()) {
