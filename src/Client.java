@@ -5,12 +5,13 @@ public class Client extends Process {
     ProcessId currentDb = null;
     boolean sessionEstablished = false;
 
-    public Client(Env env, ProcessId me) {
+    public Client(Env env, ProcessId me, ProcessId currentDb) {
         this.env = env;
         this.me = me;
         setLogger();
         loadProp();
         env.addProc(me, this);
+        this.currentDb = currentDb;
         checkCurrentDb();
     }
 
@@ -54,7 +55,7 @@ public class Client extends Process {
 
     private ProcessId checkCurrentDb() {
         if (lastAcceptStamp == null && !disconnectFrom.contains(env.dbProcs.keySet().toArray()[0])) {
-            currentDb = (ProcessId) env.dbProcs.keySet().toArray()[0];
+            if(currentDb == null) currentDb = (ProcessId) env.dbProcs.keySet().toArray()[0];
             sendMessage(currentDb, new BayouMessage(me, new RequestSessionMessage(new Command(lastAcceptStamp))));
             return currentDb;
         } else if (env.dbProcs.containsKey(lastAcceptStamp.replica)) {

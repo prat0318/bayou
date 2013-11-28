@@ -2,7 +2,6 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Scanner;
 
 public class Env {
     Map<ProcessId, Process> clientProcs = new HashMap<ProcessId, Process>();
@@ -135,12 +134,21 @@ public class Env {
         switch (c) {
             case START_CLIENT:
                 pid = new ProcessId("client_" + maxClientNo++);
-                Client _client = new Client(this, pid);
+                ProcessId connectToDB = null;
+                if(arr.length > 1)
+                    for (ProcessId p : dbProcs.keySet())
+                        if (p.name.equals(arr[1])) connectToDB = p;
+                Client _client = new Client(this, pid, connectToDB);
                 System.out.println("Started new Client " + pid);
                 break;
             case RESTART_CLIENT:
-                pid = new ProcessId(arr[1]);
-                Client _reclient = new Client(this, pid);
+                String[] splitArr = arr[1].split(BODY_MSG_SEPERATOR, 2);
+                pid = new ProcessId(splitArr[0]);
+                connectToDB = null;
+                if(splitArr.length > 1)
+                    for (ProcessId p : dbProcs.keySet())
+                        if (p.name.equals(splitArr[1])) connectToDB = p;
+                Client _reclient = new Client(this, pid, connectToDB);
                 System.out.println("Restarted the Client " + pid);
                 break;
             case STOP_CLIENT:
