@@ -8,6 +8,7 @@ public class Gossip extends Process {
         this.replica = replica;
         this.env = replica.env;
         this.me = me;
+        this.disconnectFrom = replica.disconnectFrom;
         setLogger();
         loadProp();
         env.addProc(me, this);

@@ -8,6 +8,7 @@ public enum UserCommands {
     SHOW_CLIENTS("Shows all live clients"),
     SHOW_DB("Shows all live servers"),
     CONNECT("CONNECT <db_name>"),
+    CONNECT_THEM("CONNECT_THEM <db_name1> <db_name2"),
     DISCONNECT("DISCONNECT <db_name>"),
     DISCONNECT_FROM("DISCONNECT_FROM <db_name> <db_name> "),
     PAUSE("PAUSE the system"),

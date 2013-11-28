@@ -88,7 +88,7 @@ public class Env {
         }
 
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        while(true) {
+        while (true) {
             System.out.print("$ Enter new Command (HELP) > ");
             String input = br.readLine();
             e.operateOn(input);
@@ -127,7 +127,7 @@ public class Env {
             case START_CLIENT:
                 pid = new ProcessId("client_" + maxClientNo++);
                 ProcessId connectToDB = null;
-                if(arr.length > 1)
+                if (arr.length > 1)
                     for (ProcessId p : dbProcs.keySet())
                         if (p.name.equals(arr[1])) connectToDB = p;
                 Client _client = new Client(this, pid, connectToDB);
@@ -137,7 +137,7 @@ public class Env {
                 String[] splitArr = arr[1].split(BODY_MSG_SEPERATOR, 2);
                 pid = new ProcessId(splitArr[0]);
                 connectToDB = null;
-                if(splitArr.length > 1)
+                if (splitArr.length > 1)
                     for (ProcessId p : dbProcs.keySet())
                         if (p.name.equals(splitArr[1])) connectToDB = p;
                 Client _reclient = new Client(this, pid, connectToDB);
@@ -205,31 +205,46 @@ public class Env {
                 System.out.println("Could not find such db...type SHOW_DB for live dbs");
                 break;
             case DISCONNECT_FROM:
-                ProcessId disconnect1 = null; Process dc1 = null;
-                ProcessId disconnect2 = null; Process dc2 = null;
+                ProcessId disconnect1 = null;
+                ProcessId disconnect2 = null;
                 String[] disArr = arr[1].split(BODY_MSG_SEPERATOR, 2);
                 for (ProcessId p : procs.keySet()) {
                     if (p.name.equals(disArr[0])) {
-                        disconnect1 = p; dc1 = procs.get(p);
+                        disconnect1 = p;
                     } else if (p.name.equals(disArr[1])) {
-                        disconnect2 = p; dc2 = procs.get(p);
+                        disconnect2 = p;
                     }
                 }
                 if (disconnect1 != null && disconnect2 != null) {
                     procs.get(disconnect1).disconnectFrom.add(disconnect2);
-                    if(dc1 instanceof Replica && ((Replica) dc1).myGossiper != null)
-                        procs.get(((Replica) dc1).myGossiper).disconnectFrom.add(disconnect2);
-
                     procs.get(disconnect2).disconnectFrom.add(disconnect1);
-                    if(dc2 instanceof Replica && ((Replica) dc2).myGossiper != null)
-                        procs.get(((Replica) dc2).myGossiper).disconnectFrom.add(disconnect1);
-                    //sendMessage(p, new BayouMessage(this.pid, new RequestMessage(new RequestCommand(null, p, "SHOW$"))));
                     System.out.println("Set disconnect between " + disconnect1 + " and " + disconnect2);
                     return;
                 }
 
                 System.out.println("Could not find such dbs...type SHOW_DB for live dbs");
                 break;
+            case CONNECT_THEM:
+                ProcessId connect1 = null;
+                ProcessId connect2 = null;
+                String[] conArr = arr[1].split(BODY_MSG_SEPERATOR, 2);
+                for (ProcessId p : procs.keySet()) {
+                    if (p.name.equals(conArr[0])) {
+                        connect1 = p;
+                    } else if (p.name.equals(conArr[1])) {
+                        connect2 = p;
+                    }
+                }
+                if (connect1 != null && connect2 != null) {
+                    procs.get(connect1).disconnectFrom.remove(connect2);
+                    procs.get(connect2).disconnectFrom.remove(connect1);
+                    System.out.println("Removed disconnect between " + connect1 + " and " + connect2);
+                    return;
+                }
+
+                System.out.println("Could not find such dbs...type SHOW_DB for live dbs");
+                break;
+
             case OP:
                 String[] opArr = arr[1].split(BODY_MSG_SEPERATOR, 2);
                 for (ProcessId p : clientProcs.keySet()) {
