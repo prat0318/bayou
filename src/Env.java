@@ -207,16 +207,17 @@ public class Env {
             case DISCONNECT_FROM:
                 ProcessId disconnect1 = null;
                 ProcessId disconnect2 = null;
-                for (ProcessId p : dbProcs.keySet()) {
-                    if (p.name.equals(arr[1])) {
+                String[] disArr = arr[1].split(BODY_MSG_SEPERATOR, 2);
+                for (ProcessId p : procs.keySet()) {
+                    if (p.name.equals(disArr[0])) {
                         disconnect1 = p;
-                    } else if (p.name.equals(arr[2])) {
+                    } else if (p.name.equals(disArr[1])) {
                         disconnect2 = p;
                     }
                 }
                 if (disconnect1 != null && disconnect2 != null) {
-                    dbProcs.get(disconnect1).disconnectFrom.add(disconnect2);
-                    dbProcs.get(disconnect2).disconnectFrom.add(disconnect1);
+                    procs.get(disconnect1).disconnectFrom.add(disconnect2);
+                    procs.get(disconnect2).disconnectFrom.add(disconnect1);
                     //sendMessage(p, new BayouMessage(this.pid, new RequestMessage(new RequestCommand(null, p, "SHOW$"))));
                     System.out.println("Set disconnect between " + disconnect1 + " and " + disconnect2);
                     return;
