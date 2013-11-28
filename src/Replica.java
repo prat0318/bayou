@@ -151,6 +151,7 @@ public class Replica extends Process {
     private void assign_given_name(RequestNameMessage requestNameMessage) {
         me.name = requestNameMessage.command.acceptStamp.toString();
         env.dbProcs.put(me, this);
+        env.procs.put(me, this);
     }
 
 
