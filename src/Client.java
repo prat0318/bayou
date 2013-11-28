@@ -52,6 +52,11 @@ public class Client extends Process {
             } else if (msg instanceof RequestMessage) {
                 if (checkDbCanBeConnectedTo(currentDb))
                     sendMessage(currentDb, new BayouMessage(me, msg));
+                else {
+                    setCurrentDb();
+                    establishSession();
+                    sendMessage(currentDb, new BayouMessage(me, msg));
+                }
             } else if (msg instanceof ResponseMessage) {
                 ResponseMessage message = (ResponseMessage) msg;
                 lastAcceptStamp = message.command.acceptStamp;
