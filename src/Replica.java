@@ -251,6 +251,8 @@ public class Replica extends Process {
 //            logger.log(messageLevel, "CSN :"+msg.command.csn+ "Position :"+getPositionInWriteLog(msg));
             if (msg.command.csn == getPositionInWriteLog(msg))
                 logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " WITH " + msg);
+//            if(msg.command.csn == getPositionInWriteLog(msg))
+//                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:"+msg.command.csn+" IN "+writeLog);
         }
 
         sendMessage(myGossiper, new BayouMessage(me, msg));
@@ -262,6 +264,8 @@ public class Replica extends Process {
                 return true;
             if (msg.command.csn == getPositionInWriteLog(msg))
                 logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " WITH " + msg);
+//            if(msg.command.csn == getPositionInWriteLog(msg))
+//                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:"+msg.command.csn+" IN "+writeLog);
             writeLog.add(msg);
             return true;
         }
