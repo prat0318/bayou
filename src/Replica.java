@@ -154,8 +154,11 @@ public class Replica extends Process {
             if (message.command != null) { //The replica present in command is retiring
                 if (message.nextPrimaryId == me){
                     this.primary = true;
+                    logger.log(messageLevel,"Promoting to primary");
                 }
                 versionVector.remove(message.command.acceptStamp.replica);
+                logger.log(messageLevel,"Deleting process from Version Vector "+versionVector);
+                addToLog(message);
             } else { //Remove myself
                 //ToDo: SEND ALL YOUR WRITE LOG TO ONE OF REPLICA, THEN BREAK ON ACK
                 Set<ProcessId> keys = new HashSet<ProcessId>(versionVector.keySet());
@@ -168,6 +171,7 @@ public class Replica extends Process {
                         }
                         writeLog.add(message);
                         gossiper.sendAllWriteLogTo(p);
+                        logger.log(messageLevel,"RETIRE AFTER SENDING LOG's to "+p);
                         return false;
                     }
                 }
