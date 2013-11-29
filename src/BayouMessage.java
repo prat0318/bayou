@@ -105,6 +105,12 @@ class RequestNameMessage extends BayouCommandMessage {
 }
 
 class RetireMessage extends BayouCommandMessage {
+    ProcessId nextPrimaryId = null;
+
+    public  RetireMessage(ProcessId p){
+        this.nextPrimaryId = p;
+    }
+
 
     @Override
     public String toString() {

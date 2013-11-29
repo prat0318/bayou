@@ -3,7 +3,7 @@ public enum UserCommands {
     STOP_CLIENT("STOP_CLIENT <client_id>"),
     RESTART_CLIENT("RESTART_CLIENT <client_id>"),
     JOIN("JOIN"),
-    LEAVE("LEAVE <db_id>"),
+    RETIRE("RETIRE <db_id>"),
     OP("OP <client_id> [ADD|DELETE|EDIT|SHOW$]$<SongName>$[<SongURL>]"),
     SHOW_CLIENTS("Shows all live clients"),
     SHOW_DB("Shows all live servers"),

@@ -39,6 +39,10 @@ public abstract class Process extends Thread {
         return assign_stop_request;
     }
 
+    public boolean checkDbCanBeConnectedTo(ProcessId p) {
+        return !(!env.dbProcs.containsKey(p) || env.dbProcs.get(p).disconnect || disconnectFrom.contains(p));
+    }
+
     public boolean stop_request() {
         return stop_request(me);
     }

@@ -7,11 +7,11 @@ import java.util.logging.Level;
  */
 public class Replica extends Process {
 
-//    int clock = 0;
+    //    int clock = 0;
     public PlayList playList;
 
-    Set<BayouCommandMessage> writeLog = new TreeSet<BayouCommandMessage>(new Comparator<BayouCommandMessage>(){
-        public int compare(BayouCommandMessage a, BayouCommandMessage b){
+    Set<BayouCommandMessage> writeLog = new TreeSet<BayouCommandMessage>(new Comparator<BayouCommandMessage>() {
+        public int compare(BayouCommandMessage a, BayouCommandMessage b) {
 //            if(a.equals(b)) return 0;
             return a.compare(b);
         }
@@ -35,17 +35,17 @@ public class Replica extends Process {
     public int getPositionInWriteLog(BayouCommandMessage b) {
         Iterator<BayouCommandMessage> i = writeLog.iterator();
         int index = 1;
-        while(i.hasNext()) {
-            if(i.next().equals(b)) return index;
+        while (i.hasNext()) {
+            if (i.next().equals(b)) return index;
             index++;
         }
         return 0;
     }
 
     public boolean isItTheBiggest(BayouCommandMessage b) {
-        if(isSentFromClient(b)) return true;
+        if (isSentFromClient(b)) return true;
         Iterator<BayouCommandMessage> i = writeLog.iterator();
-        while(i.hasNext()) if(i.next().compare(b) > 0) return false;
+        while (i.hasNext()) if (i.next().compare(b) > 0) return false;
         return true;
     }
 
@@ -62,7 +62,7 @@ public class Replica extends Process {
             BayouMessage rawMsg = getNextMessage();
             BayouCommandMessage msg = rawMsg.bayouCommandMessage;
             //DROP A MESSAGE IF COMMAND IS PRESENT AND IS AHEAD OF YOUR VERSION VECTOR
-            if(checkForCSN(msg) && !isSentFromClient(msg)) {
+            if (checkForCSN(msg) && !isSentFromClient(msg)) {
                 logger.log(messageLevel, "Ignoring message, Already have " + msg);
                 continue;
             }
@@ -80,8 +80,11 @@ public class Replica extends Process {
 //                //ToDo:  WRITE_LOG, POP ALL WRITE_LOGS AND
 //                //ToDo: AND STORE IN SOME STACK - HANDLE ROLLBACK OF STATES
 //            }
-            if(isItTheBiggest(msg))
-                takeActionOnMessage(rawMsg);
+            if (isItTheBiggest(msg)){
+                if(!takeActionOnMessage(rawMsg)){
+                    break;
+                }
+            }
             else {               //Recreate the playlist
                 playList.clear();
                 takeActionOnPreviousMessages(rawMsg);
@@ -93,32 +96,38 @@ public class Replica extends Process {
 
     private void takeActionOnNextMessages(BayouMessage rawMsg) {
         Iterator<BayouCommandMessage> i = writeLog.iterator();
-        while(i.hasNext()) {
+        while (i.hasNext()) {
             BayouCommandMessage msg = i.next();
-            if(msg.compare(rawMsg.bayouCommandMessage) <= 0) continue;
-            if(msg instanceof RequestMessage) takeActionOnMessage(new BayouMessage(me, msg));
+            if (msg.compare(rawMsg.bayouCommandMessage) <= 0) continue;
+            if (msg instanceof RequestMessage) takeActionOnMessage(new BayouMessage(me, msg));
         }
     }
 
     private void takeActionOnPreviousMessages(BayouMessage rawMsg) {
         Iterator<BayouCommandMessage> i = writeLog.iterator();
-        while(i.hasNext()) {
+        while (i.hasNext()) {
             BayouCommandMessage msg = i.next();
-            if(msg.compare(rawMsg.bayouCommandMessage) >= 0) continue;
-            if(msg instanceof RequestMessage) takeActionOnMessage(new BayouMessage(me, msg));
+            if (msg.compare(rawMsg.bayouCommandMessage) >= 0) continue;
+            if (msg instanceof RequestMessage) takeActionOnMessage(new BayouMessage(me, msg));
         }
     }
-    private void takeActionOnMessage(BayouMessage rawMsg) {
+
+    /**
+     * Returns False when the server is supposed to retire
+     * @param rawMsg
+     * @return
+     */
+    private boolean takeActionOnMessage(BayouMessage rawMsg) {
         BayouCommandMessage msg = rawMsg.bayouCommandMessage;
         boolean sentFromClient = isSentFromClient(msg);
 
         if (msg instanceof RequestMessage) {
             RequestCommand c = (RequestCommand) ((RequestMessage) msg).command;
-            if(sentFromClient)
+            if (sentFromClient)
                 c.updateAcceptStamp(versionVector.get(me), me);
             playList.action(c);
             logger.log(messageLevel, "PERFORMED " + c + "OUTPUT :" + c.response);
-            if(sentFromClient) //if (rawMsg.src.equals(c.client))  //Only if I was the first replica then reply
+            if (sentFromClient) //if (rawMsg.src.equals(c.client))  //Only if I was the first replica then reply
                 sendMessage(c.client, new BayouMessage(me, new ResponseMessage(c)));
             addToLog(msg);
         } else if (msg instanceof RequestNameMessage) {
@@ -143,27 +152,44 @@ public class Replica extends Process {
         } else if (msg instanceof RetireMessage) {
             RetireMessage message = (RetireMessage) msg;
             if (message.command != null) { //The replica present in command is retiring
+                if (message.nextPrimaryId == me){
+                    this.primary = true;
+                }
                 versionVector.remove(message.command.acceptStamp.replica);
             } else { //Remove myself
                 //ToDo: SEND ALL YOUR WRITE LOG TO ONE OF REPLICA, THEN BREAK ON ACK
-                message.command = new Command(new AcceptStamp(versionVector.get(me), me));
+                Set<ProcessId> keys = new HashSet<ProcessId>(versionVector.keySet());
+                for(ProcessId p : keys){
+                    if (checkDbCanBeConnectedTo(p)){
+                        Gossip gossiper = (Gossip) env.procs.get(myGossiper);
+                        message.command = new Command(new AcceptStamp(versionVector.get(me), me));
+                        if(primary){
+                            message.nextPrimaryId = p;
+                        }
+                        writeLog.add(message);
+                        gossiper.sendAllWriteLogTo(p);
+                        return false;
+                    }
+                }
+                System.out.print("Can retire as none of the server's are Alive");
+                return false;
             }
-            addToLog(message);
         } else if (msg instanceof RequestSessionMessage) {
-          RequestSessionMessage message = (RequestSessionMessage) msg;
-            if(message.lastUpdatedStamp == null){
+            RequestSessionMessage message = (RequestSessionMessage) msg;
+            if (message.lastUpdatedStamp == null) {
                 //CHECK my vector clock contains the required accept Stamp
-                sendMessage(rawMsg.src,new BayouMessage(me, new SessionReplyMessage(true)));
-            }else {
-                if(versionVector.containsKey(message.lastUpdatedStamp.replica) &&
-                        (versionVector.get(message.lastUpdatedStamp.replica) >= (message.lastUpdatedStamp.acceptClock) ))
-                sendMessage(rawMsg.src,new BayouMessage(me, new SessionReplyMessage(true)));
+                sendMessage(rawMsg.src, new BayouMessage(me, new SessionReplyMessage(true)));
+            } else {
+                if (versionVector.containsKey(message.lastUpdatedStamp.replica) &&
+                        (versionVector.get(message.lastUpdatedStamp.replica) >= (message.lastUpdatedStamp.acceptClock)))
+                    sendMessage(rawMsg.src, new BayouMessage(me, new SessionReplyMessage(true)));
                 else
-                    sendMessage(rawMsg.src,new BayouMessage(me, new SessionReplyMessage(false)));
+                    sendMessage(rawMsg.src, new BayouMessage(me, new SessionReplyMessage(false)));
             }
         } else {
             logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");
         }
+        return true;
     }
 
     private boolean isSentFromClient(BayouCommandMessage msg) {
@@ -182,16 +208,16 @@ public class Replica extends Process {
 
     private int min_version_vector() {
         int min = Integer.MAX_VALUE;
-        for(Integer i: versionVector.values())
-            if(min > i) min = i;
-        logger.log(messageLevel, "current VV: "+versionVector);
+        for (Integer i : versionVector.values())
+            if (min > i) min = i;
+        logger.log(messageLevel, "current VV: " + versionVector);
         return min;
     }
 
     private int max_version_vector() {
         int max = Integer.MIN_VALUE;
-        for(Integer i: versionVector.values())
-            if(max < i) max = i;
+        for (Integer i : versionVector.values())
+            if (max < i) max = i;
         return max;
     }
 
@@ -200,41 +226,42 @@ public class Replica extends Process {
 
         //Assuming accept-clock will always be there in Command
         //Assuming that version vector has entry for this replica
-        if(msg.command.acceptStamp.replica.equals(me))
+        if (msg.command.acceptStamp.replica.equals(me))
             versionVector.put(me, 1 + versionVector.get(me));
         else
             versionVector.put(msg.command.acceptStamp.replica, msg.command.acceptStamp.acceptClock);
         //JUMP YOURSELF TO MAX VERSION VECTOR
         versionVector.put(me, max_version_vector());
 
-        if(primary) {
+        if (primary) {
             //assign csns
             Iterator<BayouCommandMessage> i = writeLog.iterator();
-            int index = 1; int min = min_version_vector();
-            while(i.hasNext()) {
+            int index = 1;
+            int min = min_version_vector();
+            while (i.hasNext()) {
                 BayouCommandMessage singleMsg = i.next();
 //                logger.log(messageLevel, min + " : " + singleMsg.command.csn + "::" + singleMsg.command.acceptStamp.acceptClock);
-                if(singleMsg.command.csn == 0 && singleMsg.command.acceptStamp.acceptClock < min) {
+                if (singleMsg.command.csn == 0 && singleMsg.command.acceptStamp.acceptClock < min) {
                     singleMsg.command.csn = index;
-                    logger.log(messageLevel, "MESSAGES STABLE TILL CSN:"+singleMsg.command.csn+" A# < "+min+" IN "+writeLog);
+                    logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + singleMsg.command.csn + " A# < " + min + " IN " + writeLog);
                 }
                 index++;
             }
         } else {
 //            logger.log(messageLevel, "CSN :"+msg.command.csn+ "Position :"+getPositionInWriteLog(msg));
-            if(msg.command.csn == getPositionInWriteLog(msg))
-                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:"+msg.command.csn+" WITH "+msg);
+            if (msg.command.csn == getPositionInWriteLog(msg))
+                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " WITH " + msg);
         }
 
         sendMessage(myGossiper, new BayouMessage(me, msg));
     }
 
     private boolean checkForCSN(BayouCommandMessage msg) {
-        if(writeLog.contains(msg)){
-            if(msg.command.csn == getWriteLogMsg(msg).command.csn)
+        if (writeLog.contains(msg)) {
+            if (msg.command.csn == getWriteLogMsg(msg).command.csn)
                 return true;
-            if(msg.command.csn == getPositionInWriteLog(msg))
-                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:"+msg.command.csn+" WITH "+msg);
+            if (msg.command.csn == getPositionInWriteLog(msg))
+                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " WITH " + msg);
             writeLog.add(msg);
             return true;
         }
@@ -243,9 +270,9 @@ public class Replica extends Process {
 
     private BayouCommandMessage getWriteLogMsg(BayouCommandMessage msg) {
         Iterator<BayouCommandMessage> i = writeLog.iterator();
-        while(i.hasNext()) {
+        while (i.hasNext()) {
             BayouCommandMessage b = i.next();
-            if(b.equals(msg)) return b;
+            if (b.equals(msg)) return b;
         }
         return null;
     }

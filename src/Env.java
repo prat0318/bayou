@@ -158,11 +158,12 @@ public class Env {
                 Replica _db = new Replica(this, pid, false);
                 System.out.println("Started new DB " + pid);
                 break;
-            case LEAVE:
+            case RETIRE:
                 for (ProcessId p : dbProcs.keySet()) {
                     if (p.name.equals(arr[1])) {
                         procs.get(p).assign_stop_request = true;
-                        System.out.println("Scheduled Kill for " + p);
+                        sendMessage(p, new BayouMessage(this.pid, new RetireMessage(null)));
+                        System.out.println("Sent Retire Message to " + p);
                         return;
                     }
                 }

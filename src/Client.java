@@ -78,9 +78,9 @@ public class Client extends Process {
         //logger.log(messageLevel, "ALL the DB's are disconnected....");
     }
 
-    private boolean checkDbCanBeConnectedTo(ProcessId p) {
-        return !(!env.dbProcs.containsKey(p) || env.dbProcs.get(p).disconnect || disconnectFrom.contains(p));
-    }
+//    private boolean checkDbCanBeConnectedTo(ProcessId p) {
+//        return !(!env.dbProcs.containsKey(p) || env.dbProcs.get(p).disconnect || disconnectFrom.contains(p));
+//    }
 
     private ProcessId establishSession() {
         sendMessage(currentDb, new BayouMessage(me, new RequestSessionMessage(lastAcceptStamp)));
