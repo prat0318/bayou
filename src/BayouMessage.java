@@ -46,7 +46,7 @@ class BayouCommandMessage {
     }
 
     public int compare(BayouCommandMessage bayouCommandMessage) {
-        if(command == null || bayouCommandMessage.command == null) return -1;
+        if (command == null || bayouCommandMessage.command == null) return -1;
         return command.compare(bayouCommandMessage.command);
     }
 
@@ -60,6 +60,7 @@ class BayouCommandMessage {
 
 class RequestSessionMessage extends BayouCommandMessage {
     AcceptStamp lastUpdatedStamp;
+
     RequestSessionMessage(AcceptStamp lastUpdatedStamp) {
         this.lastUpdatedStamp = lastUpdatedStamp;
     }
@@ -75,6 +76,7 @@ class RequestSessionMessage extends BayouCommandMessage {
 
 class SessionReplyMessage extends BayouCommandMessage {
     boolean sessionGranted;
+
     public SessionReplyMessage(boolean sessionGranted) {
         this.sessionGranted = sessionGranted;
     }
@@ -103,6 +105,7 @@ class RequestNameMessage extends BayouCommandMessage {
         this.my_original_id = src;
     }
 }
+
 class NoOpMessage extends BayouCommandMessage {
 
 }
@@ -110,7 +113,7 @@ class NoOpMessage extends BayouCommandMessage {
 class RetireMessage extends BayouCommandMessage {
     ProcessId nextPrimaryId = null;
 
-    public  RetireMessage(ProcessId p){
+    public RetireMessage(ProcessId p) {
         this.nextPrimaryId = p;
     }
 

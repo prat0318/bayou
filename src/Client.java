@@ -66,7 +66,7 @@ public class Client extends Process {
         }
     }
 
-    private void setCurrentDb(){
+    private void setCurrentDb() {
         for (int i = 0; i < env.dbProcs.size(); i++) {
             if (checkDbCanBeConnectedTo((ProcessId) env.dbProcs.keySet().toArray()[i])) {
                 this.currentDb = (ProcessId) env.dbProcs.keySet().toArray()[i];
@@ -77,10 +77,6 @@ public class Client extends Process {
         //System.out.println("ALL the DB's are disconnected....");
         //logger.log(messageLevel, "ALL the DB's are disconnected....");
     }
-
-//    private boolean checkDbCanBeConnectedTo(ProcessId p) {
-//        return !(!env.dbProcs.containsKey(p) || env.dbProcs.get(p).disconnect || disconnectFrom.contains(p));
-//    }
 
     private ProcessId establishSession() {
         sendMessage(currentDb, new BayouMessage(me, new RequestSessionMessage(lastAcceptStamp)));

@@ -7,12 +7,10 @@ import java.util.logging.Level;
  */
 public class Replica extends Process {
 
-    //    int clock = 0;
     public PlayList playList;
 
     Set<BayouCommandMessage> writeLog = new TreeSet<BayouCommandMessage>(new Comparator<BayouCommandMessage>() {
         public int compare(BayouCommandMessage a, BayouCommandMessage b) {
-//            if(a.equals(b)) return 0;
             return a.compare(b);
         }
     });
@@ -66,26 +64,11 @@ public class Replica extends Process {
                 logger.log(messageLevel, "Ignoring message, Already have " + msg);
                 continue;
             }
-//            if (msg.command != null && msg.command.acceptStamp != null) {
-//                //ToDo: EXTRACT THE CSN OUT OF COMMAND
-//
-//                Integer currentClock = versionVector.get(msg.command.acceptStamp.replica);
-//                if (!my_first_request_name_response(msg))
-//                    if ((currentClock != null && currentClock < msg.command.acceptStamp.acceptClock) ||
-//                            (currentClock == null && msg.command.acceptStamp.acceptClock != 1)) {
-//                        logger.log(messageLevel, "Dropping message, currClock=" + currentClock + " " + msg.command);
-//                        continue;
-//                    }
-//                //ToDo: [NOT DOING RIGHT NOW] IF CANNOT BE ADDED AT THE END OF
-//                //ToDo:  WRITE_LOG, POP ALL WRITE_LOGS AND
-//                //ToDo: AND STORE IN SOME STACK - HANDLE ROLLBACK OF STATES
-//            }
-            if (isItTheBiggest(msg)){
-                if(!takeActionOnMessage(rawMsg)){
+            if (isItTheBiggest(msg)) {
+                if (!takeActionOnMessage(rawMsg)) {
                     break;
                 }
-            }
-            else {               //Recreate the playlist
+            } else {               //Recreate the playlist
                 playList.clear();
                 takeActionOnPreviousMessages(rawMsg);
                 takeActionOnMessage(rawMsg);
@@ -97,14 +80,14 @@ public class Replica extends Process {
     public void printMyState() {
         String log = "";
         Iterator<BayouCommandMessage> i = writeLog.iterator();
-        while (i.hasNext()){
-            log = log + i.next().toString()+"\n";
+        while (i.hasNext()) {
+            log = log + i.next().toString() + "\n";
         }
-        logger.log(messageLevel, "\n*****************************************\n"+
-         "LATEST COMMIT SEQ. NO. : " + maxCsn + "\n" +
-         "MESSAGES in Write LOG  : " + log + "\n" +
-         "CURRENT PLAYLIST       : " + playList.show() + "\n" +
-         "*****************************************");
+        logger.log(messageLevel, "\n*****************************************\n" +
+                "LATEST COMMIT SEQ. NO. : " + maxCsn + "\n" +
+                "MESSAGES in Write LOG  : " + log + "\n" +
+                "CURRENT PLAYLIST       : " + playList.show() + "\n" +
+                "*****************************************");
     }
 
     private void takeActionOnNextMessages(BayouMessage rawMsg) {
@@ -127,6 +110,7 @@ public class Replica extends Process {
 
     /**
      * Returns False when the server is supposed to retire
+     *
      * @param rawMsg
      * @return
      */
@@ -138,13 +122,15 @@ public class Replica extends Process {
             RequestCommand c = (RequestCommand) ((RequestMessage) msg).command;
             if (sentFromClient)
                 c.updateAcceptStamp(versionVector.get(me), me);
-            playList.action(c);
+            boolean oP = playList.action(c);
             logger.log(messageLevel, "PERFORMED " + c + "OUTPUT :" + c.response);
             if (sentFromClient) //if (rawMsg.src.equals(c.client))  //Only if I was the first replica then reply
                 sendMessage(c.client, new BayouMessage(me, new ResponseMessage(c)));
-            addToLog(msg);
+            if (oP) {
+                addToLog(msg);
+            }
         } else if (msg instanceof NoOpMessage) {
-            logger.log(messageLevel, "Rcvd a NO-OP message from "+ rawMsg.src);
+            logger.log(messageLevel, "Rcvd a NO-OP message from " + rawMsg.src);
         } else if (msg instanceof RequestNameMessage) {
             RequestNameMessage message = (RequestNameMessage) msg;
             if (message.command != null) {
@@ -167,26 +153,26 @@ public class Replica extends Process {
         } else if (msg instanceof RetireMessage) {
             RetireMessage message = (RetireMessage) msg;
             if (message.command != null) { //The replica present in command is retiring
-                if (message.nextPrimaryId == me){
+                if (message.nextPrimaryId == me) {
                     this.primary = true;
-                    logger.log(messageLevel,"Promoting to primary");
+                    logger.log(messageLevel, "Promoting to primary");
                 }
                 versionVector.remove(message.command.acceptStamp.replica);
-                logger.log(messageLevel,"Deleting process from Version Vector "+versionVector);
+                logger.log(messageLevel, "Deleting process from Version Vector " + versionVector);
                 addToLog(message);
             } else { //Remove myself
                 //ToDo: SEND ALL YOUR WRITE LOG TO ONE OF REPLICA, THEN BREAK ON ACK
                 Set<ProcessId> keys = new HashSet<ProcessId>(versionVector.keySet());
-                for(ProcessId p : keys){
-                    if (checkDbCanBeConnectedTo(p)){
+                for (ProcessId p : keys) {
+                    if (checkDbCanBeConnectedTo(p)) {
                         Gossip gossiper = (Gossip) env.procs.get(myGossiper);
                         message.command = new Command(new AcceptStamp(versionVector.get(me), me));
-                        if(primary){
+                        if (primary) {
                             message.nextPrimaryId = p;
                         }
                         writeLog.add(message);
                         gossiper.sendAllWriteLogTo(p);
-                        logger.log(messageLevel,"RETIRING AFTER SENDING LOG's to "+p);
+                        logger.log(messageLevel, "RETIRING AFTER SENDING LOG's to " + p);
                         return false;
                     }
                 }
@@ -261,16 +247,16 @@ public class Replica extends Process {
 //                logger.log(messageLevel, min + " : " + singleMsg.command.csn + "::" + singleMsg.command.acceptStamp.acceptClock);
                 if (singleMsg.command.csn == 0 && singleMsg.command.acceptStamp.acceptClock < min) {
                     singleMsg.command.csn = index;
-                    if(maxCsn < singleMsg.command.csn) maxCsn = singleMsg.command.csn;
+                    if (maxCsn < singleMsg.command.csn) maxCsn = singleMsg.command.csn;
                     logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + singleMsg.command.csn + " A# < " + min + " IN " + writeLog);
                 }
                 index++;
             }
         } else {
 //            logger.log(messageLevel, "CSN :"+msg.command.csn+ "Position :"+getPositionInWriteLog(msg));
-            if(msg.command.csn == getPositionInWriteLog(msg)) {
-                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:"+msg.command.csn+" IN "+writeLog);
-                if(maxCsn < msg.command.csn) maxCsn = msg.command.csn;
+            if (msg.command.csn == getPositionInWriteLog(msg)) {
+                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " IN " + writeLog);
+                if (maxCsn < msg.command.csn) maxCsn = msg.command.csn;
             }
         }
 
@@ -281,9 +267,9 @@ public class Replica extends Process {
         if (writeLog.contains(msg)) {
             if (msg.command.csn == getWriteLogMsg(msg).command.csn)
                 return true;
-            if(msg.command.csn == getPositionInWriteLog(msg)) {
-                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:"+msg.command.csn+" IN "+writeLog);
-                if(maxCsn < msg.command.csn) maxCsn = msg.command.csn;
+            if (msg.command.csn == getPositionInWriteLog(msg)) {
+                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " IN " + writeLog);
+                if (maxCsn < msg.command.csn) maxCsn = msg.command.csn;
             }
             writeLog.add(msg);
             return true;
