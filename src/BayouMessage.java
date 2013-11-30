@@ -103,6 +103,9 @@ class RequestNameMessage extends BayouCommandMessage {
         this.my_original_id = src;
     }
 }
+class NoOpMessage extends BayouCommandMessage {
+
+}
 
 class RetireMessage extends BayouCommandMessage {
     ProcessId nextPrimaryId = null;

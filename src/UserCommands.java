@@ -10,6 +10,8 @@ public enum UserCommands {
     CONNECT("CONNECT <db_name>"),
     CONNECT_THEM("CONNECT_THEM <db_name1> <db_name2"),
     DISCONNECT("DISCONNECT <db_name>"),
+    CURR_STATE("CURR_STATE <db_name>"),
+    NO_OP("NO_OP"),
     DISCONNECT_FROM("DISCONNECT_FROM <db_name> <db_name> "),
     PAUSE("PAUSE the system"),
     CONTINUE("CONTINUE the execution"),

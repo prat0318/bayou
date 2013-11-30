@@ -24,6 +24,7 @@ public abstract class Process extends Thread {
         try {
         synchronized (this){
             while (disconnect){
+                if(this instanceof Replica) ((Replica) this).printMyState();
                 logger.log(messageLevel, "Getting disconnected..........");
                 this.wait();
             }

@@ -79,6 +79,7 @@ public class Env {
             BufferedReader br = new BufferedReader(new FileReader(new File("script")));
             String input;
             while ((input = br.readLine()) != null) {
+                if(input.startsWith("#")) continue;
                 System.out.println("SCRIPT CMD: " + input);
                 e.operateOn(input);
                 delay();
@@ -205,6 +206,15 @@ public class Env {
                 }
                 System.out.println("Could not find such db...type SHOW_DB for live dbs");
                 break;
+            case CURR_STATE:
+                for (ProcessId p : dbProcs.keySet()) {
+                    if (p.name.equals(arr[1])) {
+                        ((Replica)dbProcs.get(p)).printMyState();
+                        return;
+                    }
+                }
+                System.out.println("Could not find such db...type SHOW_DB for live dbs");
+                break;
             case DISCONNECT_FROM:
                 ProcessId disconnect1 = null;
                 ProcessId disconnect2 = null;
@@ -268,12 +278,15 @@ public class Env {
             case PAUSE:
                 //TODO: TO CHECK IF PAUSE AND CONTINUE DO NOT MEAN THAT THE SERVERS PAUSE BUT IT IS CLIENTS DO NOT GIVE ANY INPUT
                 for (ProcessId p : dbProcs.keySet()) {
-                    System.out.println("to Set disconnect for " + p);
                     dbProcs.get(p).disconnect = true;
-                    sendMessage(p, new BayouMessage(this.pid, new RequestMessage(new RequestCommand(null, p, "SHOW$"))));
+                    sendMessage(p, new BayouMessage(this.pid, new NoOpMessage()));
                     System.out.println("Set disconnect for " + p);
                 }
                 System.out.println("Disconnected all the db ");
+                break;
+            case NO_OP:
+                for (ProcessId p : dbProcs.keySet())
+                    sendMessage(p, new BayouMessage(this.pid, new NoOpMessage()));
                 break;
             case HELP:
                 for (UserCommands cc : UserCommands.values()) {

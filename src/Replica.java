@@ -17,7 +17,7 @@ public class Replica extends Process {
         }
     });
 
-    int csn = 0;
+    int maxCsn = 0;
     boolean primary;
     ProcessId myGossiper;
     Map<ProcessId, Integer> versionVector = new HashMap<ProcessId, Integer>();
@@ -62,7 +62,7 @@ public class Replica extends Process {
             BayouMessage rawMsg = getNextMessage();
             BayouCommandMessage msg = rawMsg.bayouCommandMessage;
             //DROP A MESSAGE IF COMMAND IS PRESENT AND IS AHEAD OF YOUR VERSION VECTOR
-            if (checkForCSN(msg) && !isSentFromClient(msg)) {
+            if (!isSentFromClient(msg) && checkForCSN(msg)) {
                 logger.log(messageLevel, "Ignoring message, Already have " + msg);
                 continue;
             }
@@ -92,6 +92,14 @@ public class Replica extends Process {
                 takeActionOnNextMessages(rawMsg);
             }
         }
+    }
+
+    public void printMyState() {
+        logger.log(messageLevel, "\n*****************************************\n"+
+         "LATEST COMMIT SEQ. NO. : " + maxCsn + "\n" +
+         "MESSAGES in Write LOG  : " + writeLog + "\n" +
+         "CURRENT PLAYLIST       : " + playList.show() + "\n" +
+         "*****************************************");
     }
 
     private void takeActionOnNextMessages(BayouMessage rawMsg) {
@@ -130,6 +138,8 @@ public class Replica extends Process {
             if (sentFromClient) //if (rawMsg.src.equals(c.client))  //Only if I was the first replica then reply
                 sendMessage(c.client, new BayouMessage(me, new ResponseMessage(c)));
             addToLog(msg);
+        } else if (msg instanceof NoOpMessage) {
+            logger.log(messageLevel, "Rcvd a NO-OP message from "+ rawMsg.src);
         } else if (msg instanceof RequestNameMessage) {
             RequestNameMessage message = (RequestNameMessage) msg;
             if (message.command != null) {
@@ -171,7 +181,7 @@ public class Replica extends Process {
                         }
                         writeLog.add(message);
                         gossiper.sendAllWriteLogTo(p);
-                        logger.log(messageLevel,"RETIRE AFTER SENDING LOG's to "+p);
+                        logger.log(messageLevel,"RETIRING AFTER SENDING LOG's to "+p);
                         return false;
                     }
                 }
@@ -214,7 +224,6 @@ public class Replica extends Process {
         int min = Integer.MAX_VALUE;
         for (Integer i : versionVector.values())
             if (min > i) min = i;
-        logger.log(messageLevel, "current VV: " + versionVector);
         return min;
     }
 
@@ -247,16 +256,17 @@ public class Replica extends Process {
 //                logger.log(messageLevel, min + " : " + singleMsg.command.csn + "::" + singleMsg.command.acceptStamp.acceptClock);
                 if (singleMsg.command.csn == 0 && singleMsg.command.acceptStamp.acceptClock < min) {
                     singleMsg.command.csn = index;
+                    if(maxCsn < singleMsg.command.csn) maxCsn = singleMsg.command.csn;
                     logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + singleMsg.command.csn + " A# < " + min + " IN " + writeLog);
                 }
                 index++;
             }
         } else {
 //            logger.log(messageLevel, "CSN :"+msg.command.csn+ "Position :"+getPositionInWriteLog(msg));
-            if (msg.command.csn == getPositionInWriteLog(msg))
-                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " WITH " + msg);
-//            if(msg.command.csn == getPositionInWriteLog(msg))
-//                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:"+msg.command.csn+" IN "+writeLog);
+            if(msg.command.csn == getPositionInWriteLog(msg)) {
+                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:"+msg.command.csn+" IN "+writeLog);
+                if(maxCsn < msg.command.csn) maxCsn = msg.command.csn;
+            }
         }
 
         sendMessage(myGossiper, new BayouMessage(me, msg));
@@ -264,12 +274,14 @@ public class Replica extends Process {
 
     private boolean checkForCSN(BayouCommandMessage msg) {
         if (writeLog.contains(msg)) {
+            logger.log(messageLevel, msg.toString());
+            logger.log(messageLevel, writeLog.toString());
             if (msg.command.csn == getWriteLogMsg(msg).command.csn)
                 return true;
-            if (msg.command.csn == getPositionInWriteLog(msg))
-                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " WITH " + msg);
-//            if(msg.command.csn == getPositionInWriteLog(msg))
-//                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:"+msg.command.csn+" IN "+writeLog);
+            if(msg.command.csn == getPositionInWriteLog(msg)) {
+                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:"+msg.command.csn+" IN "+writeLog);
+                if(maxCsn < msg.command.csn) maxCsn = msg.command.csn;
+            }
             writeLog.add(msg);
             return true;
         }

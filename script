@@ -29,4 +29,4 @@ OP client_0 SHOW$
 OP client_1 SHOW$
 SHOW_CLIENTS
 SHOW_DB
-QUIT
+#QUIT
