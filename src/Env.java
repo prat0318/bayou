@@ -199,7 +199,7 @@ public class Env {
                 for (ProcessId p : dbProcs.keySet()) {
                     if (p.name.equals(arr[1])) {
                         dbProcs.get(p).disconnect = true;
-                        sendMessage(p, new BayouMessage(this.pid, new RequestMessage(new RequestCommand(null, p, "SHOW$"))));
+                        sendMessage(p, new BayouMessage(this.pid, new NoOpMessage()));
                         System.out.println("Set disconnect for " + p);
                         return;
                     }
