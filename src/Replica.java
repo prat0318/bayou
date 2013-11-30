@@ -274,8 +274,6 @@ public class Replica extends Process {
 
     private boolean checkForCSN(BayouCommandMessage msg) {
         if (writeLog.contains(msg)) {
-            logger.log(messageLevel, msg.toString());
-            logger.log(messageLevel, writeLog.toString());
             if (msg.command.csn == getWriteLogMsg(msg).command.csn)
                 return true;
             if(msg.command.csn == getPositionInWriteLog(msg)) {

@@ -207,13 +207,16 @@ public class Env {
                 System.out.println("Could not find such db...type SHOW_DB for live dbs");
                 break;
             case CURR_STATE:
-                for (ProcessId p : dbProcs.keySet()) {
-                    if (p.name.equals(arr[1])) {
-                        ((Replica)dbProcs.get(p)).printMyState();
-                        return;
-                    }
+                if(arr.length > 1) {
+                    for (ProcessId p : dbProcs.keySet())
+                        if (p.name.equals(arr[1])) {
+                            ((Replica)dbProcs.get(p)).printMyState();
+                            return;
+                        }
+                    System.out.println("Could not find such db...type SHOW_DB for live dbs");
+                } else {
+                    for (ProcessId p : dbProcs.keySet()) ((Replica)dbProcs.get(p)).printMyState();
                 }
-                System.out.println("Could not find such db...type SHOW_DB for live dbs");
                 break;
             case DISCONNECT_FROM:
                 ProcessId disconnect1 = null;
