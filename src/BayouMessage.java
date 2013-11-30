@@ -142,8 +142,10 @@ class RequestMessage extends BayouCommandMessage {
 
 class ResponseMessage extends BayouCommandMessage {
 
-    public ResponseMessage(RequestCommand requestCommand) {
+    boolean oP;
+    public ResponseMessage(RequestCommand requestCommand, boolean oP) {
         super(requestCommand);
+        this.oP = oP;
     }
 
     @Override

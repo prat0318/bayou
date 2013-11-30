@@ -125,7 +125,7 @@ public class Replica extends Process {
             boolean oP = playList.action(c);
             logger.log(messageLevel, "PERFORMED " + c + "OUTPUT :" + c.response);
             if (sentFromClient) //if (rawMsg.src.equals(c.client))  //Only if I was the first replica then reply
-                sendMessage(c.client, new BayouMessage(me, new ResponseMessage(c)));
+                sendMessage(c.client, new BayouMessage(me, new ResponseMessage(c,oP)));
             if (oP) {
                 addToLog(msg);
             }

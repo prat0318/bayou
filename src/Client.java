@@ -59,8 +59,10 @@ public class Client extends Process {
                 }
             } else if (msg instanceof ResponseMessage) {
                 ResponseMessage message = (ResponseMessage) msg;
-                lastAcceptStamp = message.command.acceptStamp;
-                updateProperty(me.name + "lastAcceptStamp", lastAcceptStamp.toString());
+                if (message.oP) {
+                    lastAcceptStamp = message.command.acceptStamp;
+                    updateProperty(me.name + "lastAcceptStamp", lastAcceptStamp.toString());
+                }
                 System.out.println(msg);
             }
         }
