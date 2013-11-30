@@ -95,9 +95,14 @@ public class Replica extends Process {
     }
 
     public void printMyState() {
+        String log = "";
+        Iterator<BayouCommandMessage> i = writeLog.iterator();
+        while (i.hasNext()){
+            log = log + i.next().toString()+"\n";
+        }
         logger.log(messageLevel, "\n*****************************************\n"+
          "LATEST COMMIT SEQ. NO. : " + maxCsn + "\n" +
-         "MESSAGES in Write LOG  : " + writeLog + "\n" +
+         "MESSAGES in Write LOG  : " + log + "\n" +
          "CURRENT PLAYLIST       : " + playList.show() + "\n" +
          "*****************************************");
     }

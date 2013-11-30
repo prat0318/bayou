@@ -13,7 +13,7 @@ public class Env {
     static final String BODY_MSG_SEPERATOR = " ";
     ProcessId pid = new ProcessId("Main");
     private static boolean scriptMode = false;
-    private static long delay_interval = 100;
+    private static long delay_interval = 1000;
 
 
     synchronized void sendMessage(ProcessId dst, BayouMessage msg) {
