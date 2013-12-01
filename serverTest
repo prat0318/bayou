@@ -1,3 +1,4 @@
+#Testing Anti Entropy functionality in different settings of network
 JOIN 1
 JOIN 2
 JOIN 3
@@ -24,10 +25,8 @@ OP client_3 EDIT$song4$url2
 CURR_STATE
 #Replicas will have the individual updates of the nodes they are connected and not of the nodes they are not connected to
 #db_0 has the edit for song2 db_0#2 has the edit for song3
-CONNECT_THEM db_0 db_0#2
-CONNECT_THEM db_0 db_0#3
 CONNECT_THEM db_0#1 db_0#2
-CONNECT_THEM db_0#1 db_0#3
+OP client_0 EDIT$song1$url3
 OP client_0 SHOW$
 OP client_1 SHOW$
 OP client_2 SHOW$
