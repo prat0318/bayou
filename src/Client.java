@@ -1,4 +1,5 @@
 import java.util.Properties;
+import java.util.logging.Level;
 
 public class Client extends Process {
     AcceptStamp lastAcceptStamp = null;
@@ -89,8 +90,7 @@ public class Client extends Process {
             if (msg instanceof SessionReplyMessage) {
                 SessionReplyMessage message = (SessionReplyMessage) msg;
                 this.sessionEstablished = message.sessionGranted;
-                logger.log(messageLevel, "Session Status granted = " + this.sessionEstablished + " with " + rawMsg.src);
-                System.out.println("Session Status granted = " + this.sessionEstablished + " with " + rawMsg.src);
+                logger.log(sessionEstablished? Level.WARNING: Level.SEVERE, me + "'s session Status granted = "+this.sessionEstablished + " with "+rawMsg.src);
                 break;
             }
         }

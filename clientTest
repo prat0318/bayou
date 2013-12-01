@@ -17,5 +17,9 @@ OP client_0 ADD$song4$url1
 CONNECT_THEM db_0 client_0
 DISCONNECT_FROM db_0#1 client_0
 OP client_0 SHOW$
-#forces client_0 to connect to db_0#1 Session doesnt get established
-QUIT
+#forces client_0 to connect to db_0#1 Session doesn't get established
+CURR_STATE
+CONNECT_THEM db_0 db_0#1
+OP client_1 ADD$song11$url11
+CURR_STATE
+#QUIT

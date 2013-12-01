@@ -265,8 +265,13 @@ public class Replica extends Process {
 
     private boolean checkForCSN(BayouCommandMessage msg) {
         if (writeLog.contains(msg)) {
-            if (msg.command.csn == getWriteLogMsg(msg).command.csn)
+            if (msg.command.csn == getWriteLogMsg(msg).command.csn) {
+                if(msg.command.csn > maxCsn) {
+                    logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " IN " + writeLog);
+                    maxCsn = msg.command.csn;
+                }
                 return true;
+            }
             if (msg.command.csn == getPositionInWriteLog(msg)) {
                 logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " IN " + writeLog);
                 if (maxCsn < msg.command.csn) maxCsn = msg.command.csn;

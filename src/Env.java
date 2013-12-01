@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Properties;
 
 public class Env {
+    public static final String PATHNAME = "clientTest";
     Map<ProcessId, Process> clientProcs = new HashMap<ProcessId, Process>();
     Map<ProcessId, Process> dbProcs = new HashMap<ProcessId, Process>();
     Map<ProcessId, Process> procs = new HashMap<ProcessId, Process>();
@@ -76,7 +77,7 @@ public class Env {
         e.run(args);
 
         try {
-            BufferedReader br = new BufferedReader(new FileReader(new File("script")));
+            BufferedReader br = new BufferedReader(new FileReader(new File(PATHNAME)));
             String input;
             while ((input = br.readLine()) != null) {
                 if(input.startsWith("#")) continue;
