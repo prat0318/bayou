@@ -126,6 +126,12 @@ public class Env {
         }
         ProcessId pid;
         switch (c) {
+            case DELAY:
+                try {
+                    Thread.sleep(Integer.parseInt(arr[1]));
+                } catch (InterruptedException e) {
+                }
+                break;
             case START_CLIENT:
                 pid = new ProcessId("client_" + maxClientNo++);
                 ProcessId connectToDB = null;
@@ -163,7 +169,7 @@ public class Env {
             case RETIRE:
                 for (ProcessId p : dbProcs.keySet()) {
                     if (p.name.equals(arr[1])) {
-                        procs.get(p).assign_stop_request = true;
+//                        procs.get(p).assign_stop_request = true;
                         sendMessage(p, new BayouMessage(this.pid, new RetireMessage(null)));
                         System.out.println("Sent Retire Message to " + p);
                         return;

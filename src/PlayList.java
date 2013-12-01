@@ -32,7 +32,7 @@ public class PlayList {
 
     public String edit(String song, String url) {
         if (!songMap.containsKey(song)) {
-            return "ERROR: PlayList does not contain " + song;
+            return "ERRROR: PlayList does not contain " + song;
         }
 
         songMap.put(song, url);
@@ -41,7 +41,7 @@ public class PlayList {
 
     public String delete(String song) {
         if (!songMap.containsKey(song)) {
-            return "ERROR: PlayList does not contain " + song;
+            return "ERRROR: PlayList does not contain " + song;
         }
         songMap.remove(song);
         return "Deleted Song " + song;

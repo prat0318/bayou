@@ -15,6 +15,7 @@ public enum UserCommands {
     DISCONNECT_FROM("DISCONNECT_FROM <db_name> <db_name> "),
     PAUSE("PAUSE the system"),
     CONTINUE("CONTINUE the execution"),
+    DELAY("DELAY <millisecs>"),
     HELP("Shows this stuff again"),
     QUIT("QUIT"),
     ;
