@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Properties;
 
 public class Env {
-    public static final String PATHNAME = "clientTest";
+    public static final String PATHNAME = "retirementTest"; //"serverTest"; //"clientTest";
     Map<ProcessId, Process> clientProcs = new HashMap<ProcessId, Process>();
     Map<ProcessId, Process> dbProcs = new HashMap<ProcessId, Process>();
     Map<ProcessId, Process> procs = new HashMap<ProcessId, Process>();
@@ -14,7 +14,7 @@ public class Env {
     static final String BODY_MSG_SEPERATOR = " ";
     ProcessId pid = new ProcessId("Main");
     private static boolean scriptMode = false;
-    private static long delay_interval = 1000;
+    private static long delay_interval = 500;
 
 
     synchronized void sendMessage(ProcessId dst, BayouMessage msg) {

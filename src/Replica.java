@@ -66,6 +66,7 @@ public class Replica extends Process {
             }
             if (isItTheBiggest(msg)) {
                 if (!takeActionOnMessage(rawMsg)) {
+                    printMyState();
                     break;
                 }
             } else {               //Recreate the playlist
@@ -85,6 +86,7 @@ public class Replica extends Process {
         }
         logger.log(messageLevel, "\n*****************************************\n" +
                 "LATEST COMMIT SEQ. NO. : " + maxCsn + "\n" +
+                "CURRENT VERSION VECTOR : " + versionVector + "\n" +
                 "MESSAGES in Write LOG  : " + log + "\n" +
                 "CURRENT PLAYLIST       : " + playList.show() + "\n" +
                 "*****************************************");
@@ -162,7 +164,8 @@ public class Replica extends Process {
                 addToLog(message);
             } else { //Remove myself
                 //ToDo: SEND ALL YOUR WRITE LOG TO ONE OF REPLICA, THEN BREAK ON ACK
-                Set<ProcessId> keys = new HashSet<ProcessId>(versionVector.keySet());
+                Set<ProcessId> keys = new TreeSet<ProcessId>(versionVector.keySet());
+                keys.remove(me);
                 for (ProcessId p : keys) {
                     if (checkDbCanBeConnectedTo(p)) {
                         Gossip gossiper = (Gossip) env.procs.get(myGossiper);
@@ -172,7 +175,7 @@ public class Replica extends Process {
                         }
                         writeLog.add(message);
                         gossiper.sendAllWriteLogTo(p);
-                        logger.log(messageLevel, "RETIRING AFTER SENDING LOG's to " + p);
+                        logger.log(Level.WARNING, me + " RETIRING AFTER SENDING LOG's to " + p);
                         return false;
                     }
                 }
@@ -230,10 +233,12 @@ public class Replica extends Process {
 
         //Assuming accept-clock will always be there in Command
         //Assuming that version vector has entry for this replica
-        if (msg.command.acceptStamp.replica.equals(me))
-            versionVector.put(me, 1 + versionVector.get(me));
-        else
-            versionVector.put(msg.command.acceptStamp.replica, msg.command.acceptStamp.acceptClock);
+//        if (msg.command.acceptStamp.replica.equals(me))
+//            versionVector.put(me, 1 + msg.command.acceptStamp.acceptClock);
+//        else
+        //Only add to your version vector if msg not type of RetireMessage
+        if(!(msg instanceof RetireMessage))
+            versionVector.put(msg.command.acceptStamp.replica, 1 + msg.command.acceptStamp.acceptClock);
         //JUMP YOURSELF TO MAX VERSION VECTOR
         versionVector.put(me, max_version_vector());
 

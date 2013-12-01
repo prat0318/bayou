@@ -23,7 +23,8 @@ OP client_1 EDIT$song2$url2
 OP client_2 EDIT$song3$url2
 OP client_3 EDIT$song4$url2
 CURR_STATE
-#Replicas will have the individual updates of the nodes they are connected and not of the nodes they are not connected to
+#Replicas will have the individual updates of the nodes they are connected
+#and not of the nodes they are not connected to
 #db_0 has the edit for song2 db_0#2 has the edit for song3
 CONNECT_THEM db_0#1 db_0#2
 OP client_0 EDIT$song1$url3
