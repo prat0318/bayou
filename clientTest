@@ -1,18 +1,19 @@
-JOIN 2
+JOIN 1
 SHOW_DB
 START_CLIENT db_0
 START_CLIENT db_0#1
 SHOW_CLIENTS
-OP client_0 ADD$song2$url1
+OP client_0 ADD$song1$url1
+OP client_1 ADD$song2$url1
 DISCONNECT_FROM db_0#1 db_0
 #Disconnect between the db's so that the changes in db_0#1 are not visible in db_0
-OP client_1 ADD$song1$url1
+OP client_1 ADD$song3$url1
 OP client_1 SHOW$
 CURR_STATE
 DISCONNECT_FROM db_0 client_0
 #forces client_0 to connect to db_0#1 Session gets established
 OP client_0 SHOW$
-OP client_0 ADD$song3$url1
+OP client_0 ADD$song4$url1
 CONNECT_THEM db_0 client_0
 DISCONNECT_FROM db_0#1 client_0
 OP client_0 SHOW$
