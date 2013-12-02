@@ -8,7 +8,7 @@
 public class Command {
 
     AcceptStamp acceptStamp;
-    public int csn;
+    public int csn = Integer.MAX_VALUE;
 
     public Command() {
     }

@@ -247,9 +247,9 @@ public class Replica extends Process {
 //        else
         //Only add to your version vector if msg not type of RetireMessage
         if(!(msg instanceof RetireMessage)) {
-//            logger.log(messageLevel, versionVector+" Adding "+msg.command.acceptStamp.replica+ " in my VV on receiving :"+msg);
             versionVector.put(msg.command.acceptStamp.replica, 1 + msg.command.acceptStamp.acceptClock);
         }
+
         //JUMP YOURSELF TO MAX VERSION VECTOR
         versionVector.put(me, max_version_vector());
 
@@ -261,37 +261,56 @@ public class Replica extends Process {
             while (i.hasNext()) {
                 BayouCommandMessage singleMsg = i.next();
 //                logger.log(messageLevel, min + " : " + singleMsg.command.csn + "::" + singleMsg.command.acceptStamp.acceptClock);
-                if (singleMsg.command.csn == 0 && singleMsg.command.acceptStamp.acceptClock < min) {
+                if (isCsnUnassigned(singleMsg) && singleMsg.command.acceptStamp.acceptClock < min) {
                     singleMsg.command.csn = index;
-                    if (maxCsn < singleMsg.command.csn) maxCsn = singleMsg.command.csn;
-                    logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + singleMsg.command.csn + " A# < " + min + " IN " + writeLog);
+                    updateMaxCsn(singleMsg);
+//                    logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + singleMsg.command.csn + " A# < " + min + " IN " + writeLog);
                 }
                 index++;
             }
         } else {
 //            logger.log(messageLevel, "CSN :"+msg.command.csn+ "Position :"+getPositionInWriteLog(msg));
-            if (msg.command.csn == getPositionInWriteLog(msg)) {
-                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " IN " + writeLog);
-                if (maxCsn < msg.command.csn) maxCsn = msg.command.csn;
-            }
+//            if (msg.command.csn == getPositionInWriteLog(msg)) {
+//                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " IN " + writeLog);
+                updateMaxCsn(msg);
+//            }
         }
 
         sendMessage(myGossiper, new BayouMessage(me, msg));
     }
 
+    private boolean isCsnUnassigned(int csn) {
+        return (csn == Integer.MAX_VALUE);
+    }
+
+   private boolean isCsnUnassigned(BayouCommandMessage b) {
+        return (b.command.csn == Integer.MAX_VALUE);
+    }
+
+    private void updateMaxCsn(BayouCommandMessage singleMsg) {
+        if(isCsnUnassigned(singleMsg)) return;
+        if (isCsnUnassigned(maxCsn) || maxCsn < singleMsg.command.csn) {
+            maxCsn = singleMsg.command.csn;
+            logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + maxCsn + " IN " + writeLog);
+        }
+    }
+
     private boolean checkForCSN(BayouCommandMessage msg) {
+
         if (writeLog.contains(msg)) {
-            if (msg.command.csn == getWriteLogMsg(msg).command.csn) {
-                if(msg.command.csn > maxCsn) {
-                    logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " IN " + writeLog);
-                    maxCsn = msg.command.csn;
-                }
-                return true;
-            }
-            if (msg.command.csn == getPositionInWriteLog(msg)) {
-                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " IN " + writeLog);
-                if (maxCsn < msg.command.csn) maxCsn = msg.command.csn;
-            }
+            if(primary) return true;
+            updateMaxCsn(msg);
+//            if (msg.command.csn == getWriteLogMsg(msg).command.csn) {
+//                if(!(isCsnUnassigned(msg)) && msg.command.csn > maxCsn) {
+//                    logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " IN " + writeLog);
+//                    maxCsn = msg.command.csn;
+//                }
+//                return true;
+//            }
+//            if (msg.command.csn == getPositionInWriteLog(msg)) {
+//                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " IN " + writeLog);
+//                updateMaxCsn(msg);
+//            }
             writeLog.add(msg);
             return true;
         }
