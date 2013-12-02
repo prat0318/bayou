@@ -170,7 +170,7 @@ public class Replica extends Process {
                     System.out.println("Can retire without Entropy as no other sever is Alive");
                 }
                 for (ProcessId p : keys) {
-                    if (checkDbCanBeConnectedTo(p)) {
+                    if (checkDbCanBeConnectedTo(p) && !env.dbProcs.get(p).cannotRetire ) {
                         Process entropyWithReplica = env.dbProcs.get(p);
                         isRetiring = true;
                         entropyWithReplica.cannotRetire = true;
