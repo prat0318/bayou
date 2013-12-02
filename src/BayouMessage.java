@@ -1,7 +1,7 @@
 public class BayouMessage {
     BayouCommandMessage bayouCommandMessage;
     ProcessId src;
-    String src_name;
+    //String src_name;
 
     public BayouMessage() {
     }
@@ -17,12 +17,12 @@ public class BayouMessage {
     public BayouMessage(ProcessId src, BayouCommandMessage bayouCommandMessage) {
         this.bayouCommandMessage = bayouCommandMessage;
         this.src = src;
-        this.src_name = src.name;
+        //this.src_name = src.name;
     }
 
     public void updateSource(ProcessId new_src) {
         this.src = new_src;
-        this.src_name = src.name;
+        //this.src_name = src.name;
     }
 
     @Override
@@ -30,7 +30,7 @@ public class BayouMessage {
         return "BayouMessage{" +
                 "commandMsg=" + bayouCommandMessage +
                 ", src=" + src +
-                ", src_name='" + src_name + '\'' +
+                //", src_name='" + src_name + '\'' +
                 '}';
     }
 }

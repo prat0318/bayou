@@ -18,7 +18,13 @@ public abstract class Process extends Thread {
     public boolean disconnect = false;
     public Set<ProcessId> disconnectFrom = new HashSet<ProcessId>();
     public Level messageLevel = Level.FINER;
+
+    /*Added this to check if a process is undergoing an entropy session with a sever which is also retiring
+    *Unless this retire entropy session completes this sever cannot retire. */
     public boolean cannotRetire = false;
+
+    /*Added to mark the server as unavailable for any kind of responses...
+     * When the sever has been marked for retirement he will not respond to any quries of client's */
     public boolean isRetiring = false;
 
     public boolean stop_request(ProcessId whoGotKilled) {
@@ -109,7 +115,7 @@ public abstract class Process extends Thread {
 
     void deliver(BayouMessage msg) {
         inbox.enqueue(msg);
-        this.logger.log(messageLevel, me.name + "<< RCVD <<" + msg.src_name + "<< : " + msg);
+        this.logger.log(messageLevel, me.name + "<< RCVD <<" + msg.src.name + "<< : " + msg);
     }
 
     public void setLogger() {
