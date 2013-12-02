@@ -1,0 +1,39 @@
+#Testing Retirement of R with other nodes, A and B in picture
+##### ADD IN CONFIG: Gossiper\:db_0\#1=1000
+JOIN 1
+JOIN 2
+SHOW_DB
+
+START_CLIENT db_0
+START_CLIENT db_0#1
+START_CLIENT db_0#2
+SHOW_CLIENTS
+
+OP client_0 ADD$song1$url1
+OP client_1 ADD$song2$url2
+OP client_2 ADD$song3$url3
+CURR_STATE
+
+DISCONNECT_FROM db_0#2 db_0#1
+#Retire db_0
+RETIRE db_0
+#db_0#2 is told about a new song from client_2
+OP client_2 ADD$song4$url4
+
+#THIS NEW REPLICA SHOULD ASK NAME FROM db_0#1
+JOIN 3
+DELAY 3000
+START_CLIENT db_0#1#5
+OP client_3 ADD$song7$url7
+
+#connect db_0#2 and let it gossip to db_0#1
+CONNECT_THEM db_0#2 db_0#1
+CURR_STATE
+
+OP client_1 DELETE$song4
+OP client_2 DELETE$song3
+CURR_STATE
+
+OP client_1 ADD$song6$url6
+CURR_STATE
+#QUIT

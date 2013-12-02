@@ -17,7 +17,9 @@ public class Gossip extends Process {
     public void sendAllWriteLogTo(ProcessId replica) {
         //Hack to avoid Concurrent Modification Error
         BayouCommandMessage[] b = this.replica.writeLog.toArray(new BayouCommandMessage[0]);
-        for(int i = 0; i < b.length; i++) sendMessage(replica, new BayouMessage(me, b[i]));
+        for(int i = 0; i < b.length; i++)
+            if(!stop_request() && !this.replica.stop_request())
+                sendMessage(replica, new BayouMessage(me, b[i]));
 //            Iterator<BayouCommandMessage> i = this.replica.writeLog.iterator();
 //            while(i.hasNext())
 //                sendMessage(replica, new BayouMessage(me, i.next()));

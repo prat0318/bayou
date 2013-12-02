@@ -84,7 +84,10 @@ public class Replica extends Process {
         String log = "";
         Iterator<BayouCommandMessage> i = writeLog.iterator();
         while (i.hasNext()) {
-            log = log + i.next().toString() + "\n";
+            BayouCommandMessage b = i.next();
+            if(isCsnUnassigned(maxCsn) || (b.command.csn > maxCsn)) b.command.notShowCsn = true;
+            log = log + b.toString() + "\n";
+            if(isCsnUnassigned(maxCsn) || (b.command.csn > maxCsn)) b.command.notShowCsn = false;
         }
         logger.log(messageLevel, "\n*****************************************\n" +
                 "LATEST COMMIT SEQ. NO. : " + maxCsn + "\n" +
@@ -290,8 +293,8 @@ public class Replica extends Process {
     }
 
     private void updateMaxCsn(BayouCommandMessage singleMsg) {
-        if (isCsnUnassigned(singleMsg)) return;
-        if (isCsnUnassigned(maxCsn) || maxCsn < singleMsg.command.csn) {
+        if(isCsnUnassigned(singleMsg)) return;
+        if ((isCsnUnassigned(maxCsn) && singleMsg.command.csn == 1) || (maxCsn + 1 == singleMsg.command.csn)) {
             maxCsn = singleMsg.command.csn;
             logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + maxCsn + " WITH " + singleMsg);
         }

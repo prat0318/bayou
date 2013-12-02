@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Properties;
 
 public class Env {
-    public static final String PATHNAME = "retirementTest"; //"serverTest"; //"clientTest";
+    public static final String PATHNAME = "reqNamePostRetireTest"; //"serverTest"; //"clientTest";
     Map<ProcessId, Process> clientProcs = new HashMap<ProcessId, Process>();
     Map<ProcessId, Process> dbProcs = new HashMap<ProcessId, Process>();
     Map<ProcessId, Process> procs = new HashMap<ProcessId, Process>();
