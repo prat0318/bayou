@@ -9,6 +9,7 @@ public class Command {
 
     AcceptStamp acceptStamp;
     public int csn = Integer.MAX_VALUE;
+    public boolean notShowCsn = false;
 
     public Command() {
     }
@@ -31,7 +32,7 @@ public class Command {
     public String toString() {
         return "Command {" +
                 " acceptStamp=" + acceptStamp +
-                ", csn=" + csn +
+                ", csn=" + (notShowCsn ? Integer.MAX_VALUE : csn) +
                 '}';
     }
 }
