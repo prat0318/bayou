@@ -34,6 +34,7 @@ public abstract class Process extends Thread {
                     if (this instanceof Replica) ((Replica) this).printMyState();
                     logger.log(messageLevel, "Getting disconnected..........");
                     this.wait();
+                    logger.log(messageLevel, "Disconnect removed... ");
                 }
             }
             Thread.sleep(this.delay);

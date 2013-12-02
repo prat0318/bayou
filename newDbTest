@@ -5,10 +5,12 @@ JOIN 2
 DELAY 1000
 SHOW_DB
 
+START_CLIENT db_0#1
+OP client_0 ADD$song1$url1
+
 CONNECT db_0
 START_CLIENT db_0
-START_CLIENT db_0#1
-START_CLIENT db_0
+START_CLIENT db_0#1#2
 SHOW_CLIENTS
 
 OP client_0 ADD$song1$url1
@@ -22,7 +24,7 @@ CURR_STATE
 
 JOIN 3
 OP client_2 ADD$song4$url4
-START_CLIENT db_0
+START_CLIENT db_0#1#2
 OP client_3 ADD$song5$url5
 CURR_STATE
 
@@ -30,7 +32,7 @@ OP client_0 ADD$song1$url1
 OP client_1 DELETE$song4
 CURR_STATE
 
-RETIRE db_1#3
+RETIRE db_0#1#7
 DELAY 500
 CURR_STATE
 
