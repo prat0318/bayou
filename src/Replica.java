@@ -15,7 +15,7 @@ public class Replica extends Process {
         }
     });
 
-    int maxCsn = 0;
+    int maxCsn = Integer.MAX_VALUE;
     boolean primary;
     ProcessId myGossiper;
     Map<ProcessId, Integer> versionVector = new HashMap<ProcessId, Integer>();
