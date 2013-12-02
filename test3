@@ -27,7 +27,7 @@ RETIRE db_0#1
 #db_0#2 is told about a new song from client_2
 OP client_2 ADD$song4$url4
 
-#connect db_0#2 and let it gossip to db_0#1
+#The only live db.. so executes cmds and gives csn
 CONNECT_THEM db_0#2 db_0#1
 CURR_STATE
 
