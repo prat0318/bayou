@@ -1,7 +1,11 @@
 #Testing Retirement of multiple nodes in chain
+#config.properties
+#db_0=10
+#delay=10
+#Gossiper\:db_0=1000
+#delay in env is 500
 JOIN 1
 JOIN 2
-JOIN 3
 SHOW_DB
 
 START_CLIENT db_0
@@ -19,7 +23,6 @@ CURR_STATE
 DISCONNECT_FROM db_0#2 db_0#1
 #Retire db_0
 RETIRE db_0
-#This gives the result : Cannot retire the server db_0#1 when the delay is set to 100 in config.properties
 DELAY 5
 RETIRE db_0#1
 #db_0#2 is told about a new song from client_2

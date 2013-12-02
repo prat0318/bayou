@@ -28,7 +28,7 @@ START_CLIENT db_0#1#2
 OP client_3 ADD$song5$url5
 CURR_STATE
 
-OP client_0 ADD$song1$url1
+OP client_0 ADD$song6$url1
 OP client_1 DELETE$song4
 CURR_STATE
 
