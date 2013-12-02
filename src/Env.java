@@ -169,7 +169,11 @@ public class Env {
             case RETIRE:
                 for (ProcessId p : dbProcs.keySet()) {
                     if (p.name.equals(arr[1])) {
-//                        procs.get(p).assign_stop_request = true;
+                        Process replica = (Process) dbProcs.get(p);
+                        if(replica.cannotRetire){
+                            System.out.println("Process cannot be Retired now.....Please wait for the Anti-Entropy to finish " + p);
+                            return;
+                        }
                         sendMessage(p, new BayouMessage(this.pid, new RetireMessage(null)));
                         System.out.println("Sent Retire Message to " + p);
                         return;

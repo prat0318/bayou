@@ -166,21 +166,28 @@ public class Replica extends Process {
                 //ToDo: SEND ALL YOUR WRITE LOG TO ONE OF REPLICA, THEN BREAK ON ACK
                 Set<ProcessId> keys = new TreeSet<ProcessId>(versionVector.keySet());
                 keys.remove(me);
+                if(keys.size() == 0){
+                    System.out.print("Can retire without Entropy as no other sever is Alive");
+                }
                 for (ProcessId p : keys) {
                     if (checkDbCanBeConnectedTo(p)) {
+                        Process entropyWithReplica = env.dbProcs.get(p);
+                        entropyWithReplica.cannotRetire = true;
                         Gossip gossiper = (Gossip) env.procs.get(myGossiper);
                         message.command = new Command(new AcceptStamp(versionVector.get(me), me));
                         if (primary) {
                             message.nextPrimaryId = p;
                         }
+
                         writeLog.add(message);
                         gossiper.sendAllWriteLogTo(p);
                         logger.log(Level.WARNING, me + " RETIRING AFTER SENDING LOG's to " + p);
+                        entropyWithReplica.cannotRetire = false;
                         return false;
                     }
                 }
-                System.out.print("Can retire as none of the server's are Alive");
-                return false;
+                System.out.print("Can not retire without Entropy as connection with other Alive severs is not possible");
+                return true;
             }
         } else if (msg instanceof RequestSessionMessage) {
             RequestSessionMessage message = (RequestSessionMessage) msg;

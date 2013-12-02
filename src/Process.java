@@ -17,18 +17,18 @@ public abstract class Process extends Thread {
     public boolean assign_stop_request = false;
     public boolean disconnect = false;
     public Set<ProcessId> disconnectFrom = new HashSet<ProcessId>();
-
     public Level messageLevel = Level.FINER;
+    public boolean cannotRetire = false;
 
     public boolean stop_request(ProcessId whoGotKilled) {
         try {
-        synchronized (this){
-            while (disconnect){
-                if(this instanceof Replica) ((Replica) this).printMyState();
-                logger.log(messageLevel, "Getting disconnected..........");
-                this.wait();
+            synchronized (this) {
+                while (disconnect) {
+                    if (this instanceof Replica) ((Replica) this).printMyState();
+                    logger.log(messageLevel, "Getting disconnected..........");
+                    this.wait();
+                }
             }
-        }
             Thread.sleep(this.delay);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -79,7 +79,7 @@ public abstract class Process extends Thread {
             in.close();
 
             FileOutputStream out = new FileOutputStream("config.properties");
-            prop.setProperty(propertyName,  propertyValue );
+            prop.setProperty(propertyName, propertyValue);
             prop.store(out, null);
             out.close();
         } catch (Exception e) {
@@ -96,7 +96,7 @@ public abstract class Process extends Thread {
     }
 
     boolean sendMessage(ProcessId dst, BayouMessage msg) {
-        if(disconnectFrom.contains(dst)){
+        if (disconnectFrom.contains(dst)) {
             this.logger.log(messageLevel, me.name + ">> SENDING FAILED TO >>" + dst + ">> : " + msg);
             return false;
         }

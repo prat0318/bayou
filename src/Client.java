@@ -70,15 +70,18 @@ public class Client extends Process {
     }
 
     private void setCurrentDb() {
-        for (int i = 0; i < env.dbProcs.size(); i++) {
+        int i;
+        for (i = 0; i < env.dbProcs.size(); i++) {
             if (checkDbCanBeConnectedTo((ProcessId) env.dbProcs.keySet().toArray()[i])) {
                 this.currentDb = (ProcessId) env.dbProcs.keySet().toArray()[i];
                 break;
             }
         }
-        //TODO: System.exit in this case as the whole set of replicas is disconnected the client cannot do anything
-        //System.out.println("ALL the DB's are disconnected....");
-        //logger.log(messageLevel, "ALL the DB's are disconnected....");
+        if (i == env.dbProcs.size()) {
+            System.out.println("CLose the client as aLL the DB's are disconnected....");
+            logger.log(messageLevel, "CLose the client as aLL the DB's are disconnected....");
+            System.exit(0);
+        }
     }
 
     private ProcessId establishSession() {
@@ -90,7 +93,7 @@ public class Client extends Process {
             if (msg instanceof SessionReplyMessage) {
                 SessionReplyMessage message = (SessionReplyMessage) msg;
                 this.sessionEstablished = message.sessionGranted;
-                logger.log(sessionEstablished? Level.WARNING: Level.SEVERE, me + "'s session Status granted = "+this.sessionEstablished + " with "+rawMsg.src);
+                logger.log(sessionEstablished ? Level.WARNING : Level.SEVERE, me + "'s session Status granted = " + this.sessionEstablished + " with " + rawMsg.src);
                 break;
             }
         }
