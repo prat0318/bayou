@@ -167,11 +167,12 @@ public class Replica extends Process {
                 Set<ProcessId> keys = new TreeSet<ProcessId>(versionVector.keySet());
                 keys.remove(me);
                 if(keys.size() == 0){
-                    System.out.print("Can retire without Entropy as no other sever is Alive");
+                    System.out.println("Can retire without Entropy as no other sever is Alive");
                 }
                 for (ProcessId p : keys) {
                     if (checkDbCanBeConnectedTo(p)) {
                         Process entropyWithReplica = env.dbProcs.get(p);
+                        isRetiring = true;
                         entropyWithReplica.cannotRetire = true;
                         Gossip gossiper = (Gossip) env.procs.get(myGossiper);
                         message.command = new Command(new AcceptStamp(versionVector.get(me), me));
@@ -186,7 +187,7 @@ public class Replica extends Process {
                         return false;
                     }
                 }
-                System.out.print("Can not retire without Entropy as connection with other Alive severs is not possible");
+                System.out.println("Can not retire without Entropy as connection with other Alive severs is not possible");
                 return true;
             }
         } else if (msg instanceof RequestSessionMessage) {

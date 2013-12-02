@@ -19,6 +19,7 @@ public abstract class Process extends Thread {
     public Set<ProcessId> disconnectFrom = new HashSet<ProcessId>();
     public Level messageLevel = Level.FINER;
     public boolean cannotRetire = false;
+    public boolean isRetiring = false;
 
     public boolean stop_request(ProcessId whoGotKilled) {
         try {
@@ -41,7 +42,8 @@ public abstract class Process extends Thread {
     }
 
     public boolean checkDbCanBeConnectedTo(ProcessId p) {
-        return !(!env.dbProcs.containsKey(p) || env.dbProcs.get(p).disconnect || disconnectFrom.contains(p));
+        return !(!env.dbProcs.containsKey(p) || env.dbProcs.get(p).disconnect || disconnectFrom.contains(p)
+                || env.dbProcs.get(p).isRetiring);
     }
 
     public boolean stop_request() {
