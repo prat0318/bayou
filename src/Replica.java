@@ -236,6 +236,7 @@ public class Replica extends Process {
     }
 
     private void addToLog(BayouCommandMessage msg) {
+        if(writeLog.contains(msg)) return;
         writeLog.add(msg);
 
         //Assuming accept-clock will always be there in Command
@@ -244,8 +245,10 @@ public class Replica extends Process {
 //            versionVector.put(me, 1 + msg.command.acceptStamp.acceptClock);
 //        else
         //Only add to your version vector if msg not type of RetireMessage
-        if(!(msg instanceof RetireMessage))
+        if(!(msg instanceof RetireMessage)) {
+//            logger.log(messageLevel, versionVector+" Adding "+msg.command.acceptStamp.replica+ " in my VV on receiving :"+msg);
             versionVector.put(msg.command.acceptStamp.replica, 1 + msg.command.acceptStamp.acceptClock);
+        }
         //JUMP YOURSELF TO MAX VERSION VECTOR
         versionVector.put(me, max_version_vector());
 
