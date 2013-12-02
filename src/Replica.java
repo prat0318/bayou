@@ -48,9 +48,11 @@ public class Replica extends Process {
     }
 
     public void body() {
-        if (!primary)
-            giveMeAName();
-        else {
+        if (!primary) {
+            if (!giveMeAName()){
+              return;    //Could not find any sever which is alive so killing itself..
+            }
+        } else {
             versionVector.put(me, 1);
             start_gossip_thread();
         }
@@ -127,7 +129,7 @@ public class Replica extends Process {
             boolean oP = playList.action(c);
             logger.log(messageLevel, "PERFORMED " + c + "OUTPUT :" + c.response);
             if (sentFromClient) //if (rawMsg.src.equals(c.client))  //Only if I was the first replica then reply
-                sendMessage(c.client, new BayouMessage(me, new ResponseMessage(c,oP)));
+                sendMessage(c.client, new BayouMessage(me, new ResponseMessage(c, oP)));
             if (oP) {
                 addToLog(msg);
             }
@@ -166,11 +168,11 @@ public class Replica extends Process {
                 //ToDo: SEND ALL YOUR WRITE LOG TO ONE OF REPLICA, THEN BREAK ON ACK
                 Set<ProcessId> keys = new TreeSet<ProcessId>(versionVector.keySet());
                 keys.remove(me);
-                if(keys.size() == 0){
+                if (keys.size() == 0) {
                     System.out.println("Can retire without Entropy as no other sever is Alive");
                 }
                 for (ProcessId p : keys) {
-                    if (checkDbCanBeConnectedTo(p) && !env.dbProcs.get(p).cannotRetire ) {
+                    if (checkDbCanBeConnectedTo(p) && !env.dbProcs.get(p).cannotRetire) {
                         Process entropyWithReplica = env.dbProcs.get(p);
                         isRetiring = true;
                         entropyWithReplica.cannotRetire = true;
@@ -237,7 +239,7 @@ public class Replica extends Process {
     }
 
     private void addToLog(BayouCommandMessage msg) {
-        if(writeLog.contains(msg)) return;
+        if (writeLog.contains(msg)) return;
         writeLog.add(msg);
 
         //Assuming accept-clock will always be there in Command
@@ -246,7 +248,7 @@ public class Replica extends Process {
 //            versionVector.put(me, 1 + msg.command.acceptStamp.acceptClock);
 //        else
         //Only add to your version vector if msg not type of RetireMessage
-        if(!(msg instanceof RetireMessage)) {
+        if (!(msg instanceof RetireMessage)) {
             versionVector.put(msg.command.acceptStamp.replica, 1 + msg.command.acceptStamp.acceptClock);
         }
 
@@ -272,7 +274,7 @@ public class Replica extends Process {
 //            logger.log(messageLevel, "CSN :"+msg.command.csn+ "Position :"+getPositionInWriteLog(msg));
 //            if (msg.command.csn == getPositionInWriteLog(msg)) {
 //                logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + msg.command.csn + " IN " + writeLog);
-                updateMaxCsn(msg);
+            updateMaxCsn(msg);
 //            }
         }
 
@@ -283,12 +285,12 @@ public class Replica extends Process {
         return (csn == Integer.MAX_VALUE);
     }
 
-   private boolean isCsnUnassigned(BayouCommandMessage b) {
+    private boolean isCsnUnassigned(BayouCommandMessage b) {
         return (b.command.csn == Integer.MAX_VALUE);
     }
 
     private void updateMaxCsn(BayouCommandMessage singleMsg) {
-        if(isCsnUnassigned(singleMsg)) return;
+        if (isCsnUnassigned(singleMsg)) return;
         if (isCsnUnassigned(maxCsn) || maxCsn < singleMsg.command.csn) {
             maxCsn = singleMsg.command.csn;
             logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + maxCsn + " WITH " + singleMsg);
@@ -298,7 +300,7 @@ public class Replica extends Process {
     private boolean checkForCSN(BayouCommandMessage msg) {
 
         if (writeLog.contains(msg)) {
-            if(primary) return true;
+            if (primary) return true;
             updateMaxCsn(msg);
 //            if (msg.command.csn == getWriteLogMsg(msg).command.csn) {
 //                if(!(isCsnUnassigned(msg)) && msg.command.csn > maxCsn) {
@@ -338,8 +340,15 @@ public class Replica extends Process {
     }
 
 
-    private void giveMeAName() {
-        sendMessage((ProcessId) env.dbProcs.keySet().toArray()[0], new BayouMessage(me, new RequestNameMessage(me)));
+    private boolean giveMeAName() {
+        ProcessId aReplica = getMeCurrentDb();
+        if (aReplica == null) {
+            System.out.println("Killing the Replica as ALL the DB's are disconnected or are Retiring....");
+            logger.log(messageLevel, "Killing the Replica as ALL the DB's are disconnected or are Retiring....");
+            return false ;
+        }
+        sendMessage(aReplica, new BayouMessage(me, new RequestNameMessage(me)));
+        return true;
     }
 
 }

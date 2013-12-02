@@ -47,9 +47,18 @@ public abstract class Process extends Thread {
         return assign_stop_request;
     }
 
+    public ProcessId getMeCurrentDb() {
+        for (int i = 0; i < env.dbProcs.size(); i++) {
+            if (checkDbCanBeConnectedTo((ProcessId) env.dbProcs.keySet().toArray()[i])) {
+                return  (ProcessId) env.dbProcs.keySet().toArray()[i];
+            }
+        }
+        return null;
+    }
+
     public boolean checkDbCanBeConnectedTo(ProcessId p) {
-        return !(!env.dbProcs.containsKey(p) || env.dbProcs.get(p).disconnect || disconnectFrom.contains(p)
-                || env.dbProcs.get(p).isRetiring);
+        return (env.dbProcs.containsKey(p) && !env.dbProcs.get(p).disconnect && !this.disconnectFrom.contains(p)
+                && !env.dbProcs.get(p).isRetiring);
     }
 
     public boolean stop_request() {

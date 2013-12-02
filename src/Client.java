@@ -14,7 +14,9 @@ public class Client extends Process {
         if (checkDbCanBeConnectedTo(currentDb))
             this.currentDb = currentDb;
         if (this.currentDb == null) {
-            setCurrentDb();
+            if (!setCurrentDb()){
+                 return;
+            }
         }
         env.addProc(me, this);
     }
@@ -54,7 +56,9 @@ public class Client extends Process {
                 if (checkDbCanBeConnectedTo(currentDb))
                     sendMessage(currentDb, new BayouMessage(me, msg));
                 else {
-                    setCurrentDb();
+                    if(!setCurrentDb()){
+                        break;
+                    }
                     establishSession();
                     sendMessage(currentDb, new BayouMessage(me, msg));
                 }
@@ -69,19 +73,14 @@ public class Client extends Process {
         }
     }
 
-    private void setCurrentDb() {
-        int i;
-        for (i = 0; i < env.dbProcs.size(); i++) {
-            if (checkDbCanBeConnectedTo((ProcessId) env.dbProcs.keySet().toArray()[i])) {
-                this.currentDb = (ProcessId) env.dbProcs.keySet().toArray()[i];
-                break;
-            }
+    private boolean setCurrentDb() {
+        this.currentDb = getMeCurrentDb();
+        if (this.currentDb == null) {
+            System.out.println("Closing the client as aLL the DB's are disconnected....");
+            logger.log(messageLevel, "Closing the client as aLL the DB's are disconnected....");
+            return false;
         }
-        if (i == env.dbProcs.size()) {
-            System.out.println("CLose the client as aLL the DB's are disconnected....");
-            logger.log(messageLevel, "CLose the client as aLL the DB's are disconnected....");
-            System.exit(0);
-        }
+        return  true;
     }
 
     private ProcessId establishSession() {
