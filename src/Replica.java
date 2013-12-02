@@ -257,11 +257,11 @@ public class Replica extends Process {
             //assign csns
             Iterator<BayouCommandMessage> i = writeLog.iterator();
             int index = 1;
-            int min = min_version_vector();
+//            int min = min_version_vector();
             while (i.hasNext()) {
                 BayouCommandMessage singleMsg = i.next();
 //                logger.log(messageLevel, min + " : " + singleMsg.command.csn + "::" + singleMsg.command.acceptStamp.acceptClock);
-                if (isCsnUnassigned(singleMsg) && singleMsg.command.acceptStamp.acceptClock < min) {
+                if (isCsnUnassigned(singleMsg)) {
                     singleMsg.command.csn = index;
                     updateMaxCsn(singleMsg);
 //                    logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + singleMsg.command.csn + " A# < " + min + " IN " + writeLog);
@@ -291,7 +291,7 @@ public class Replica extends Process {
         if(isCsnUnassigned(singleMsg)) return;
         if (isCsnUnassigned(maxCsn) || maxCsn < singleMsg.command.csn) {
             maxCsn = singleMsg.command.csn;
-            logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + maxCsn + " IN " + writeLog);
+            logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + maxCsn + " WITH " + singleMsg);
         }
     }
 

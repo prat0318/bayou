@@ -18,6 +18,7 @@ public class Command {
     }
 
     public int compare(Command command) {
+        if(csn != command.csn) return Integer.compare(csn, command.csn);
         if(acceptStamp == null || command.acceptStamp == null) return -1;
         return acceptStamp.compare(command.acceptStamp);
     }
