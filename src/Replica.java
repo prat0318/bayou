@@ -196,12 +196,12 @@ public class Replica extends Process {
             }
         } else if (msg instanceof RequestSessionMessage) {
             RequestSessionMessage message = (RequestSessionMessage) msg;
-            if (message.command == null || message.command.acceptStamp == null) {
+            if (message.lastUpdatedStamp == null ){
                 sendMessage(rawMsg.src, new BayouMessage(me, new SessionReplyMessage(true)));
             } else {
                 //CHECK my Write Log contains the required accept Stamp
                 for (BayouCommandMessage m : writeLog) {
-                    if ( m.command.acceptStamp.compare(message.command.acceptStamp) == 0) {
+                    if ( m.command.acceptStamp.compare(message.lastUpdatedStamp) == 0) {
                         sendMessage(rawMsg.src, new BayouMessage(me, new SessionReplyMessage(true)));
                         return true;
                     }

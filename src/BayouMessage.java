@@ -59,20 +59,20 @@ class BayouCommandMessage {
 }
 
 class RequestSessionMessage extends BayouCommandMessage {
-//    AcceptStamp lastUpdatedStamp;
+    AcceptStamp lastUpdatedStamp;
 
-//    RequestSessionMessage(AcceptStamp lastUpdatedStamp) {
-//        this.lastUpdatedStamp = lastUpdatedStamp;
-//    }
-    RequestSessionMessage(Command cmd) {
-        this.command = cmd;
+    RequestSessionMessage(AcceptStamp lastUpdatedStamp) {
+        this.lastUpdatedStamp = lastUpdatedStamp;
     }
 
+//    RequestSessionMessage(Command cmd) {
+//        this.command = cmd;
+//    }
 
     @Override
     public String toString() {
         return "RequestSessionMessage{" +
-                //", acceptStamp=" + lastUpdatedStamp +
+                ", acceptStamp=" + lastUpdatedStamp +
                 ", command= " + command +
                 '}';
     }
