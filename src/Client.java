@@ -84,7 +84,8 @@ public class Client extends Process {
     }
 
     private ProcessId establishSession() {
-        sendMessage(currentDb, new BayouMessage(me, new RequestSessionMessage(lastAcceptStamp)));
+        //sendMessage(currentDb, new BayouMessage(me, new RequestSessionMessage(lastAcceptStamp)));
+        sendMessage(currentDb, new BayouMessage(me, new RequestSessionMessage(new Command(lastAcceptStamp))));
         while (!stop_request()) {
             BayouMessage rawMsg = getNextMessage();
             BayouCommandMessage msg = rawMsg.bayouCommandMessage;

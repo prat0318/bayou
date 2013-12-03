@@ -49,8 +49,8 @@ public class Replica extends Process {
 
     public void body() {
         if (!primary) {
-            if (!giveMeAName()){
-              return;    //Could not find any sever which is alive so killing itself..
+            if (!giveMeAName()) {
+                return;    //Could not find any sever which is alive so killing itself..
             }
         } else {
             versionVector.put(me, 1);
@@ -85,9 +85,9 @@ public class Replica extends Process {
         Iterator<BayouCommandMessage> i = writeLog.iterator();
         while (i.hasNext()) {
             BayouCommandMessage b = i.next();
-            if(isCsnUnassigned(maxCsn) || (b.command.csn > maxCsn)) b.command.notShowCsn = true;
+            if (isCsnUnassigned(maxCsn) || (b.command.csn > maxCsn)) b.command.notShowCsn = true;
             log = log + b.toString() + "\n";
-            if(isCsnUnassigned(maxCsn) || (b.command.csn > maxCsn)) b.command.notShowCsn = false;
+            if (isCsnUnassigned(maxCsn) || (b.command.csn > maxCsn)) b.command.notShowCsn = false;
         }
         logger.log(messageLevel, "\n*****************************************\n" +
                 "LATEST COMMIT SEQ. NO. : " + maxCsn + "\n" +
@@ -168,7 +168,6 @@ public class Replica extends Process {
                 logger.log(messageLevel, "Deleting process from Version Vector " + versionVector);
                 addToLog(message);
             } else { //Remove myself
-                //ToDo: SEND ALL YOUR WRITE LOG TO ONE OF REPLICA, THEN BREAK ON ACK
                 Set<ProcessId> keys = new TreeSet<ProcessId>(versionVector.keySet());
                 keys.remove(me);
                 if (keys.size() == 0) {
@@ -197,15 +196,17 @@ public class Replica extends Process {
             }
         } else if (msg instanceof RequestSessionMessage) {
             RequestSessionMessage message = (RequestSessionMessage) msg;
-            if (message.lastUpdatedStamp == null) {
-                //CHECK my vector clock contains the required accept Stamp
+            if (message.command == null || message.command.acceptStamp == null) {
                 sendMessage(rawMsg.src, new BayouMessage(me, new SessionReplyMessage(true)));
             } else {
-                if (versionVector.containsKey(message.lastUpdatedStamp.replica) &&
-                        (versionVector.get(message.lastUpdatedStamp.replica) >= (message.lastUpdatedStamp.acceptClock)))
-                    sendMessage(rawMsg.src, new BayouMessage(me, new SessionReplyMessage(true)));
-                else
-                    sendMessage(rawMsg.src, new BayouMessage(me, new SessionReplyMessage(false)));
+                //CHECK my Write Log contains the required accept Stamp
+                for (BayouCommandMessage m : writeLog) {
+                    if ( m.command.acceptStamp.compare(message.command.acceptStamp) == 0) {
+                        sendMessage(rawMsg.src, new BayouMessage(me, new SessionReplyMessage(true)));
+                        return true;
+                    }
+                }
+                sendMessage(rawMsg.src, new BayouMessage(me, new SessionReplyMessage(false)));
             }
         } else {
             logger.log(Level.SEVERE, "Bayou.Replica: unknown msg type");
@@ -293,7 +294,7 @@ public class Replica extends Process {
     }
 
     private void updateMaxCsn(BayouCommandMessage singleMsg) {
-        if(isCsnUnassigned(singleMsg)) return;
+        if (isCsnUnassigned(singleMsg)) return;
         if ((isCsnUnassigned(maxCsn) && singleMsg.command.csn == 1) || (maxCsn + 1 == singleMsg.command.csn)) {
             maxCsn = singleMsg.command.csn;
             logger.log(messageLevel, "MESSAGES STABLE TILL CSN:" + maxCsn + " WITH " + singleMsg);
@@ -348,7 +349,7 @@ public class Replica extends Process {
         if (aReplica == null) {
             System.out.println("Killing the Replica as ALL the DB's are disconnected or are Retiring....");
             logger.log(messageLevel, "Killing the Replica as ALL the DB's are disconnected or are Retiring....");
-            return false ;
+            return false;
         }
         sendMessage(aReplica, new BayouMessage(me, new RequestNameMessage(me)));
         return true;
