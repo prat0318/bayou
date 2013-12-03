@@ -1,4 +1,4 @@
-#Testing Retirement of R with other nodes, A and B in picture
+#Check CSN being assigned
 JOIN 1
 SHOW_DB
 
@@ -13,8 +13,30 @@ OP client_0 ADD$song3$url3
 OP client_1 ADD$song4$url4
 CURR_STATE
 
-#connect db_0#2 and let it gossip to db_0#1
+#connect db_0#1 and let it gossip to db_0
 CONNECT_THEM db_0 db_0#1
 OP client_0 ADD$song5$url5
+CURR_STATE
+
+#disconnect db_0#1 db_0#5 so that the retirement of the existing primary is not known to the existing server
+JOIN 2
+DISCONNECT_FROM db_0#1 db_0#5
+START_CLIENT db_0#5
+SHOW_DB
+SHOW_CLIENTS
+OP client_2 ADD$song6$url6
+
+#retirment of Primary
+RETIRE db_0
+DELAY 500
+CURR_STATE
+
+#BUG Session should get established but it is showing that the session was not established..
+#because the server is aware of the logs
+OP client_0 EDIT$song5$url6
+OP client_2 EDIT$song5$url6
+
+RETIRE db_0#1
+DELAY 500
 CURR_STATE
 QUIT
