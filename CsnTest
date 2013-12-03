@@ -31,12 +31,20 @@ RETIRE db_0
 DELAY 500
 CURR_STATE
 
-#BUG Session should get established but it is showing that the session was not established..
-#because the server is aware of the logs
+#Client should be able to form a session with any of the new Db's which is alive
 OP client_0 EDIT$song5$url6
 OP client_2 EDIT$song5$url6
 
+#Should not be able to retire because no existing server is listening to the any of the messages.
 RETIRE db_0#1
 DELAY 500
 CURR_STATE
+
+#The messages with CSN which are present with the sever db_0#1 should now be visible at the db_0#5
+CONNECT_THEM db_0#1 db_0#5
+#Without the below line the entropy between the replica's doesn't take place..
+OP client_2 EDIT$song2$url6
+DELAY 500
+CURR_STATE
+
 QUIT
