@@ -1,27 +1,33 @@
 #Testing Creation of a new DB
 JOIN 1
 DISCONNECT db_0
+
+#creation of New db with a non primary sever
 JOIN 2
 DELAY 1000
 SHOW_DB
 
 START_CLIENT db_0#1
 OP client_0 ADD$song1$url1
+OP client_0 EDIT$song1$url2
 
+#primary assigns a CSN to the message after getting messages from anti-entropy
 CONNECT db_0
 START_CLIENT db_0
 START_CLIENT db_0#1#2
 SHOW_CLIENTS
 
-OP client_0 ADD$song1$url1
+OP client_0 EDIT$song1$url3
 OP client_1 ADD$song2$url2
 OP client_2 ADD$song3$url3
 CURR_STATE
 
+#retirment of Primary
 RETIRE db_0
 DELAY 500
 CURR_STATE
 
+#Join of new node after the retirment of the first primary
 JOIN 3
 OP client_2 ADD$song4$url4
 START_CLIENT db_0#1#2
@@ -35,5 +41,14 @@ CURR_STATE
 RETIRE db_0#1#7
 DELAY 500
 CURR_STATE
+
+#JOIN not possible when the system is in Pause
+PAUSE
+JOIN 4
+START_CLIENT db_0#1#2
+CONTINUE
+#resume of normal operation
+OP client_0 ADD$song6$url1
+OP client_1 DELETE$song4
 
 QUIT
