@@ -26,7 +26,7 @@ OP client_2 ADD$song4$url4
 CONNECT_THEM db_0#2 db_0#1
 CURR_STATE
 
-OP client_1 DELETE$song4
+OP client_1 DELETE$song2
 OP client_2 DELETE$song3
 CURR_STATE
 

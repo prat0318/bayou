@@ -2,9 +2,15 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
 
 public class Env {
-    public static final String PATHNAME = "clientTest"; //"serverTest"; //"clientTest";
+//    public static String PATHNAME = "clientTest";
+//    public static String PATHNAME = "serverTest";
+//    public static String PATHNAME = "retirementTest";
+//    public static String PATHNAME = "reqNamePostRetireTest";
+//    public static String PATHNAME = "CsnTest";
+    public static String PATHNAME = "newDbTest";
     Map<ProcessId, Process> clientProcs = new HashMap<ProcessId, Process>();
     Map<ProcessId, Process> dbProcs = new HashMap<ProcessId, Process>();
     Map<ProcessId, Process> procs = new HashMap<ProcessId, Process>();
@@ -159,7 +165,7 @@ public class Env {
                         return;
                     }
                 }
-                System.out.println("Could not find such client...type SHOW_CLIENTS for live clients");
+                System.err.println("Could not find such client...type SHOW_CLIENTS for live clients");
                 break;
             case JOIN:
                 pid = new ProcessId("db_" + arr[1]);
@@ -179,7 +185,7 @@ public class Env {
                         return;
                     }
                 }
-                System.out.println("Could not find such db...type SHOW_DB for live dbs");
+                System.err.println("Could not find such db...type SHOW_DB for live dbs");
                 break;
             case SHOW_DB:
                 for (ProcessId p : dbProcs.keySet()) {
@@ -204,7 +210,7 @@ public class Env {
                         return;
                     }
                 }
-                System.out.println("Could not find such db...type SHOW_DB for live dbs");
+                System.err.println("Could not find such db...type SHOW_DB for live dbs");
                 break;
             case DISCONNECT:
                 for (ProcessId p : dbProcs.keySet()) {
@@ -224,7 +230,7 @@ public class Env {
                             ((Replica)dbProcs.get(p)).printMyState();
                             return;
                         }
-                    System.out.println("Could not find such db...type SHOW_DB for live dbs");
+                    System.err.println("Could not find such db...type SHOW_DB for live dbs");
                 } else {
                     for (ProcessId p : dbProcs.keySet()) ((Replica)dbProcs.get(p)).printMyState();
                 }
@@ -242,12 +248,15 @@ public class Env {
                 }
                 if (disconnect1 != null && disconnect2 != null) {
                     procs.get(disconnect1).disconnectFrom.add(disconnect2);
+                    procs.get(disconnect1).logger.log(Level.WARNING, disconnect1+": NO MORE MSGS WILL BE RECEIVED FROM "+disconnect2+" and its Gossiper...");
+
                     procs.get(disconnect2).disconnectFrom.add(disconnect1);
+                    procs.get(disconnect2).logger.log(Level.WARNING, disconnect2+ ": NO MORE MSGS WILL BE RECEIVED FROM "+disconnect1+" and its Gossiper...");
                     System.out.println("Set disconnect between " + disconnect1 + " and " + disconnect2);
                     return;
                 }
 
-                System.out.println("Could not find such dbs...type SHOW_DB for live dbs");
+                System.err.println("Could not find such dbs...type SHOW_DB for live dbs");
                 break;
             case CONNECT_THEM:
                 ProcessId connect1 = null;
@@ -262,12 +271,14 @@ public class Env {
                 }
                 if (connect1 != null && connect2 != null) {
                     procs.get(connect1).disconnectFrom.remove(connect2);
+                    procs.get(connect1).logger.log(Level.WARNING, connect1+": RESUMING MSGS AGAIN FROM " + connect2+" ...");
                     procs.get(connect2).disconnectFrom.remove(connect1);
+                    procs.get(connect2).logger.log(Level.WARNING, connect2+ ": RESUMING MSGS AGAIN FROM " + connect1 + " ...");
                     System.out.println("Removed disconnect between " + connect1 + " and " + connect2);
                     return;
                 }
 
-                System.out.println("Could not find such dbs...type SHOW_DB for live dbs");
+                System.err.println("Could not find such dbs...type SHOW_DB for live dbs");
                 break;
             case OP:
                 String[] opArr = arr[1].split(BODY_MSG_SEPERATOR, 2);
@@ -277,7 +288,7 @@ public class Env {
                         return;
                     }
                 }
-                System.out.println("Could not find such client...type SHOW_CLIENTS for live clients");
+                System.err.println("Could not find such client...type SHOW_CLIENTS for live clients");
                 break;
             case CONTINUE:
                 for (ProcessId p : dbProcs.keySet()) {

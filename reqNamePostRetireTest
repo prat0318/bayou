@@ -15,7 +15,6 @@ OP client_2 ADD$song3$url3
 CURR_STATE
 
 DISCONNECT_FROM db_0#2 db_0#1
-#Retire db_0
 RETIRE db_0
 #db_0#2 is told about a new song from client_2
 OP client_2 ADD$song4$url4
@@ -36,4 +35,4 @@ CURR_STATE
 
 OP client_1 ADD$song6$url6
 CURR_STATE
-#QUIT
+QUIT

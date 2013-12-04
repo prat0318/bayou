@@ -162,10 +162,10 @@ public class Replica extends Process {
             if (message.command != null) { //The replica present in command is retiring
                 if (message.nextPrimaryId == me) {
                     this.primary = true;
-                    logger.log(messageLevel, "Promoting to primary");
+                    logger.log(Level.WARNING, "Promoting to primary");
                 }
                 versionVector.remove(message.command.acceptStamp.replica);
-                logger.log(messageLevel, "Deleting process from Version Vector " + versionVector);
+                logger.log(messageLevel, "Deleting process" + message.command.acceptStamp.replica + "from Version Vector. " + versionVector);
                 addToLog(message);
             } else { //Remove myself
                 Set<ProcessId> keys = new TreeSet<ProcessId>(versionVector.keySet());
